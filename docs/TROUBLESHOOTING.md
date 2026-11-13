@@ -2,7 +2,10 @@
 
 For problems during missions, cutscenes, or driving, see [Known issues](KNOWN_ISSUES.md).
 
+
 ## Installation
+
+If Microsoft Defender flags `GTAVXR.exe`, see the [Microsoft Defender notice in the v1.0.0 release notes](https://github.com/LVL-VR/GTAVXR/releases/tag/v1.0.0#microsoft-defender-reports).
 
 | What you see | What to do |
 | --- | --- |
