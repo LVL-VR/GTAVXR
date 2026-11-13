@@ -2,6 +2,14 @@
 
 GTAVXR focuses on open-world exploration. If a Story Mode sequence gives you trouble in VR, follow the steps below.
 
+## Microsoft Defender reports
+
+Some users have reported that Microsoft Defender flagged `GTAVXR.exe`. We scanned the exact installer published with v1.0.0 using Microsoft Defender, and our scan reported no threats.
+
+The installer unpacks the bundled VR components and uses your existing GTA V Legacy files to build the VR executable locally. Antivirus checks can flag legitimate installers that unpack executable files.
+
+To verify your download, compare its SHA-256 with the value listed under **Release assets**. You can also scan the installer with your preferred antivirus or [VirusTotal](https://www.virustotal.com/).
+
 ## Story Mode, camera, and cutscenes
 
 | Issue | What to do |
