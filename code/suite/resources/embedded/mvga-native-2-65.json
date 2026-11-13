@@ -1,0 +1,307 @@
+{
+  "archive_sha256": "5ED85D065A68584353C3E42F1DC67928584CBEA22A822E45EAE57FD24B0A8C0C",
+  "assembly": "Make Visuals Great Again - v2.65/Automatic Installation/MAKE VISUALS GREAT AGAIN - 2.65.oiv",
+  "jobs": [
+    {
+      "relative": "data/hbaosettings.xml",
+      "bytes": 628,
+      "sha256": "2A52B04652DC0F49AE6694DD3C9EDF6E94DC8779302BF60ABA748BCA086356FF",
+      "resource_version": 0,
+      "member": "content/hbaosettings.xml",
+      "input_sha256": "308FAB92BFBAE9D63C21B3178A7AF7B589062112AF36007B6C237DD54E1E37CC",
+      "input_bytes": 629,
+      "path": "gtavxr_mvga147/common/data/hbaosettings.xml"
+    },
+    {
+      "relative": "data/visualsettings.dat",
+      "bytes": 43930,
+      "sha256": "8CEE86C3092D7A486EC22B72B09F60ED30C5D54E6F727D0153F77611A17AF76B",
+      "resource_version": 0,
+      "member": "content/visualsettings.dat",
+      "input_sha256": "8CEE86C3092D7A486EC22B72B09F60ED30C5D54E6F727D0153F77611A17AF76B",
+      "input_bytes": 43930,
+      "path": "gtavxr_mvga147/common/data/visualsettings.dat"
+    },
+    {
+      "relative": "data/timecycle/timecycle_mods_1.xml",
+      "bytes": 411818,
+      "sha256": "C4562078B4F796A41648422840A47FDFA76E00442977CC232B217BCAA35971FE",
+      "resource_version": 0,
+      "member": "content/timecycle_mods_1.xml",
+      "input_sha256": "C4562078B4F796A41648422840A47FDFA76E00442977CC232B217BCAA35971FE",
+      "input_bytes": 411818,
+      "path": "gtavxr_mvga147/common/data/timecycle/timecycle_mods_1.xml"
+    },
+    {
+      "relative": "data/timecycle/w_blizzard.xml",
+      "bytes": 132664,
+      "sha256": "AD4234ED4A53CC6D9F6B024B7C4F92302BEDEB22A59EA4E15FAD25B461A4F1F9",
+      "resource_version": 0,
+      "member": "content/w_blizzard.xml",
+      "input_sha256": "AD4234ED4A53CC6D9F6B024B7C4F92302BEDEB22A59EA4E15FAD25B461A4F1F9",
+      "input_bytes": 132664,
+      "path": "gtavxr_mvga147/common/data/timecycle/w_blizzard.xml"
+    },
+    {
+      "relative": "data/timecycle/w_clear.xml",
+      "bytes": 129596,
+      "sha256": "53C8642E5111FAAEE778A3C61B33AFC3003ABD5F309EA543A5CF4D4514C5AC3C",
+      "resource_version": 0,
+      "member": "content/w_clear.xml",
+      "input_sha256": "53C8642E5111FAAEE778A3C61B33AFC3003ABD5F309EA543A5CF4D4514C5AC3C",
+      "input_bytes": 129596,
+      "path": "gtavxr_mvga147/common/data/timecycle/w_clear.xml"
+    },
+    {
+      "relative": "data/timecycle/w_clearing.xml",
+      "bytes": 131551,
+      "sha256": "A85AC37825DE24EC2B72F63AA53D6994AC7A2478260BBB4AF0246BF067966158",
+      "resource_version": 0,
+      "member": "content/w_clearing.xml",
+      "input_sha256": "A85AC37825DE24EC2B72F63AA53D6994AC7A2478260BBB4AF0246BF067966158",
+      "input_bytes": 131551,
+      "path": "gtavxr_mvga147/common/data/timecycle/w_clearing.xml"
+    },
+    {
+      "relative": "data/timecycle/w_clouds.xml",
+      "bytes": 130703,
+      "sha256": "D79A6CD0266241F752E9AA626BB5D9181B1BA19926D87BAAD17532D61AEED220",
+      "resource_version": 0,
+      "member": "content/w_clouds.xml",
+      "input_sha256": "D79A6CD0266241F752E9AA626BB5D9181B1BA19926D87BAAD17532D61AEED220",
+      "input_bytes": 130703,
+      "path": "gtavxr_mvga147/common/data/timecycle/w_clouds.xml"
+    },
+    {
+      "relative": "data/timecycle/w_extrasunny.xml",
+      "bytes": 129596,
+      "sha256": "270CDF8B388C27AC0515EBA208140C075DACEF9DEEFDDDDA5AA8A3670C1C071F",
+      "resource_version": 0,
+      "member": "content/w_extrasunny.xml",
+      "input_sha256": "270CDF8B388C27AC0515EBA208140C075DACEF9DEEFDDDDA5AA8A3670C1C071F",
+      "input_bytes": 129596,
+      "path": "gtavxr_mvga147/common/data/timecycle/w_extrasunny.xml"
+    },
+    {
+      "relative": "data/timecycle/w_foggy.xml",
+      "bytes": 129832,
+      "sha256": "DCA52B89F6F67A040F1D680A8A1DE545CCC5E192824365D34B59D6B9E367EEC6",
+      "resource_version": 0,
+      "member": "content/w_foggy.xml",
+      "input_sha256": "DCA52B89F6F67A040F1D680A8A1DE545CCC5E192824365D34B59D6B9E367EEC6",
+      "input_bytes": 129832,
+      "path": "gtavxr_mvga147/common/data/timecycle/w_foggy.xml"
+    },
+    {
+      "relative": "data/timecycle/w_neutral.xml",
+      "bytes": 129595,
+      "sha256": "FBA5D6645D91E4538B8A243DAC2E35D7FB5ADA64C8D44F33CA5A52E99409D74C",
+      "resource_version": 0,
+      "member": "content/w_neutral.xml",
+      "input_sha256": "FBA5D6645D91E4538B8A243DAC2E35D7FB5ADA64C8D44F33CA5A52E99409D74C",
+      "input_bytes": 129595,
+      "path": "gtavxr_mvga147/common/data/timecycle/w_neutral.xml"
+    },
+    {
+      "relative": "data/timecycle/w_overcast.xml",
+      "bytes": 129554,
+      "sha256": "43C6E16FAAD9E4034BADDDA0B66B39E67769D848ED248C28E35211A850375256",
+      "resource_version": 0,
+      "member": "content/w_overcast.xml",
+      "input_sha256": "43C6E16FAAD9E4034BADDDA0B66B39E67769D848ED248C28E35211A850375256",
+      "input_bytes": 129554,
+      "path": "gtavxr_mvga147/common/data/timecycle/w_overcast.xml"
+    },
+    {
+      "relative": "data/timecycle/w_rain.xml",
+      "bytes": 130741,
+      "sha256": "A52205B288909E2AC4DD7BA2BC36E1F6C007F1657B8F4D4899163550C7E82EF5",
+      "resource_version": 0,
+      "member": "content/w_rain.xml",
+      "input_sha256": "A52205B288909E2AC4DD7BA2BC36E1F6C007F1657B8F4D4899163550C7E82EF5",
+      "input_bytes": 130741,
+      "path": "gtavxr_mvga147/common/data/timecycle/w_rain.xml"
+    },
+    {
+      "relative": "data/timecycle/w_smog.xml",
+      "bytes": 132255,
+      "sha256": "2CCF4EE606F522F752C1207C459DDE8D674BF7B4C239318AE90A0AB73EAFF9C8",
+      "resource_version": 0,
+      "member": "content/w_smog.xml",
+      "input_sha256": "2CCF4EE606F522F752C1207C459DDE8D674BF7B4C239318AE90A0AB73EAFF9C8",
+      "input_bytes": 132255,
+      "path": "gtavxr_mvga147/common/data/timecycle/w_smog.xml"
+    },
+    {
+      "relative": "data/timecycle/w_snow.xml",
+      "bytes": 132781,
+      "sha256": "C0543F3E401ACD403E3A7D5A4CC957DC271E3634B4C65B4AB39AFD95CEEAC79C",
+      "resource_version": 0,
+      "member": "content/w_snow.xml",
+      "input_sha256": "C0543F3E401ACD403E3A7D5A4CC957DC271E3634B4C65B4AB39AFD95CEEAC79C",
+      "input_bytes": 132781,
+      "path": "gtavxr_mvga147/common/data/timecycle/w_snow.xml"
+    },
+    {
+      "relative": "data/timecycle/w_thunder.xml",
+      "bytes": 129562,
+      "sha256": "255B5E8947460053C55B48F442AB2045E3F0D3DE10598C74CBED2AF48CBB11E3",
+      "resource_version": 0,
+      "member": "content/w_thunder.xml",
+      "input_sha256": "255B5E8947460053C55B48F442AB2045E3F0D3DE10598C74CBED2AF48CBB11E3",
+      "input_bytes": 129562,
+      "path": "gtavxr_mvga147/common/data/timecycle/w_thunder.xml"
+    },
+    {
+      "relative": "textures/graphics.ytd",
+      "bytes": 19497945,
+      "sha256": "2D2BF514886A72C4AEBAE42044DCCD214499381984C6F68447427120AF0053D2",
+      "resource_version": 13,
+      "member": "content/graphics.ytd",
+      "input_sha256": "2D2BF514886A72C4AEBAE42044DCCD214499381984C6F68447427120AF0053D2",
+      "input_bytes": 19497945,
+      "path": "gtavxr_mvga147/platform/textures/graphics.ytd"
+    },
+    {
+      "relative": "textures/graphics_pc.ytd",
+      "bytes": 9745648,
+      "sha256": "8D17708E626C9EB622FCC5CF6CB64CF7E83B6C8A2680C0FD742B64002F5D39D2",
+      "resource_version": 13,
+      "member": "content/graphics_pc.ytd",
+      "input_sha256": "8D17708E626C9EB622FCC5CF6CB64CF7E83B6C8A2680C0FD742B64002F5D39D2",
+      "input_bytes": 9745648,
+      "path": "gtavxr_mvga147/platform/textures/graphics_pc.ytd"
+    },
+    {
+      "relative": "textures/fxweather.ytd",
+      "bytes": 837160,
+      "sha256": "1452BF82F930C55C996E7E61081B5125A980295B4F6A3881F77695A4434A468D",
+      "resource_version": 13,
+      "member": "content/fxweather.ytd",
+      "input_sha256": "1452BF82F930C55C996E7E61081B5125A980295B4F6A3881F77695A4434A468D",
+      "input_bytes": 837160,
+      "path": "gtavxr_mvga147/platform/textures/fxweather.ytd"
+    },
+    {
+      "relative": "data/levels/gta5/weather.xml",
+      "bytes": 51030,
+      "sha256": "83DD25AFE0F623463DC8AB8FC7A9AC6A5AE553996F466AF810156F5183466537",
+      "resource_version": 0,
+      "member": "content/weather.xml",
+      "input_sha256": "AB0474CF88CA19B03C4B718303481EAF799F494EF601D714C9B03A0846A7E630",
+      "input_bytes": 51036,
+      "path": "gtavxr_mvga147/common/data/levels/gta5/weather.xml"
+    },
+    {
+      "relative": "data/levels/gta5/weather/rainstorm_emitter_drop.xml",
+      "bytes": 429,
+      "sha256": "C0F3E0742803728E43BB80CBB5BCEBFA9E0CFFBD54C04E9FBE1C4CA829BEDA54",
+      "resource_version": 0,
+      "member": "content/rainstorm_emitter_drop.xml",
+      "input_sha256": "C0F3E0742803728E43BB80CBB5BCEBFA9E0CFFBD54C04E9FBE1C4CA829BEDA54",
+      "input_bytes": 429,
+      "path": "gtavxr_mvga147/common/data/levels/gta5/weather/rainstorm_emitter_drop.xml"
+    },
+    {
+      "relative": "data/levels/gta5/weather/rainstorm_emitter_mist.xml",
+      "bytes": 432,
+      "sha256": "099A58015AEE63F2E7DD0347FF197DED15872527CA83573A1F0688DF974EAE38",
+      "resource_version": 0,
+      "member": "content/rainstorm_emitter_mist.xml",
+      "input_sha256": "099A58015AEE63F2E7DD0347FF197DED15872527CA83573A1F0688DF974EAE38",
+      "input_bytes": 432,
+      "path": "gtavxr_mvga147/common/data/levels/gta5/weather/rainstorm_emitter_mist.xml"
+    },
+    {
+      "relative": "data/levels/gta5/weather/rainstorm_render_drop.xml",
+      "bytes": 1141,
+      "sha256": "51DC6D20F0E6AA838EBCD5A9A0A64E6A152946FF5C9A43956B1054B1989B39D3",
+      "resource_version": 0,
+      "member": "content/rainstorm_render_drop.xml",
+      "input_sha256": "51DC6D20F0E6AA838EBCD5A9A0A64E6A152946FF5C9A43956B1054B1989B39D3",
+      "input_bytes": 1141,
+      "path": "gtavxr_mvga147/common/data/levels/gta5/weather/rainstorm_render_drop.xml"
+    },
+    {
+      "relative": "data/levels/gta5/weather/rainstorm_render_ground.xml",
+      "bytes": 1195,
+      "sha256": "CC13F65D14290E94858EC9852E1A42E4C297CCED13FA1AABD2D40797755F8E69",
+      "resource_version": 0,
+      "member": "content/rainstorm_render_ground.xml",
+      "input_sha256": "CC13F65D14290E94858EC9852E1A42E4C297CCED13FA1AABD2D40797755F8E69",
+      "input_bytes": 1195,
+      "path": "gtavxr_mvga147/common/data/levels/gta5/weather/rainstorm_render_ground.xml"
+    },
+    {
+      "relative": "data/levels/gta5/weather/rainstorm_render_mist.xml",
+      "bytes": 1195,
+      "sha256": "E911855036E9220927822144B8C017E72102F15C67079F15101D9D175C91B974",
+      "resource_version": 0,
+      "member": "content/rainstorm_render_mist.xml",
+      "input_sha256": "E911855036E9220927822144B8C017E72102F15C67079F15101D9D175C91B974",
+      "input_bytes": 1195,
+      "path": "gtavxr_mvga147/common/data/levels/gta5/weather/rainstorm_render_mist.xml"
+    },
+    {
+      "relative": "data/levels/gta5/weather/thunder_render_drop.xml",
+      "bytes": 1142,
+      "sha256": "5ABABA273782368C66FCE46829BD020B50AC0D0E7D8EE33BCAB8822D7D5A8CBE",
+      "resource_version": 0,
+      "member": "content/thunder_render_drop.xml",
+      "input_sha256": "5ABABA273782368C66FCE46829BD020B50AC0D0E7D8EE33BCAB8822D7D5A8CBE",
+      "input_bytes": 1142,
+      "path": "gtavxr_mvga147/common/data/levels/gta5/weather/thunder_render_drop.xml"
+    },
+    {
+      "relative": "data/levels/gta5/weather/thunder_render_ground.xml",
+      "bytes": 1194,
+      "sha256": "E34F92E0AB60FD3F6F9709EEE9D9364757CE38FFFEF68E05BD16B8CC161B5B75",
+      "resource_version": 0,
+      "member": "content/thunder_render_ground.xml",
+      "input_sha256": "E34F92E0AB60FD3F6F9709EEE9D9364757CE38FFFEF68E05BD16B8CC161B5B75",
+      "input_bytes": 1194,
+      "path": "gtavxr_mvga147/common/data/levels/gta5/weather/thunder_render_ground.xml"
+    },
+    {
+      "relative": "shaders/win32_50_final/gtavxr_ao147_50.fxc",
+      "bytes": 389151,
+      "sha256": "D46DD50B4A36344E1DCC74A4917F93D01BC875BC5BD94B7238ABBCED2D4D4F57",
+      "resource_version": 0,
+      "path": "gtavxr_mvga147/common/shaders/win32_50_final/gtavxr_ao147_50.fxc",
+      "base_path": "common/shaders/win32_50/gtavxr_ao147_50.fxc"
+    },
+    {
+      "relative": "shaders/win32_50_final/gtavxr_ao147_ms_50.fxc",
+      "bytes": 368216,
+      "sha256": "D9B43C322392ACE55DC217205B7841C3DBE7787573C1079F73954AED98AEC3FC",
+      "resource_version": 0,
+      "path": "gtavxr_mvga147/common/shaders/win32_50_final/gtavxr_ao147_ms_50.fxc",
+      "base_path": "common/shaders/win32_50/gtavxr_ao147_ms_50.fxc"
+    },
+    {
+      "relative": "shaders/win32_50_final/gtavxr_csm147_50.fxc",
+      "bytes": 42913,
+      "sha256": "377C4D07EEE79DCBEEEBC0F2812C128ACC7EAB486EF38E9AF4CDBAE9C03E9929",
+      "resource_version": 0,
+      "path": "gtavxr_mvga147/common/shaders/win32_50_final/gtavxr_csm147_50.fxc",
+      "base_path": "common/shaders/win32_50/gtavxr_csm147_50.fxc"
+    },
+    {
+      "relative": "shaders/win32_50_final/gtavxr_csm147_ms_50.fxc",
+      "bytes": 47759,
+      "sha256": "C3A55ACD3A1E4E1C6684B5322AE389EBBB7C6F463B4E3013954D2064515098D9",
+      "resource_version": 0,
+      "path": "gtavxr_mvga147/common/shaders/win32_50_final/gtavxr_csm147_ms_50.fxc",
+      "base_path": "common/shaders/win32_50/gtavxr_csm147_ms_50.fxc"
+    },
+    {
+      "relative": "shaders/win32_50_final/gtavxr_csm147_ms0_50.fxc",
+      "bytes": 47223,
+      "sha256": "F8C35B5D856B036837EB769F7970096928EF21B22C0C788B5A7113DB14A340F1",
+      "resource_version": 0,
+      "path": "gtavxr_mvga147/common/shaders/win32_50_final/gtavxr_csm147_ms0_50.fxc",
+      "base_path": "common/shaders/win32_50/gtavxr_csm147_ms0_50.fxc"
+    }
+  ],
+  "archive_bytes": 94090692
+}

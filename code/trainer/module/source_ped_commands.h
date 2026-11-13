@@ -1,0 +1,21 @@
+#pragma once
+#include <stdint.h>
+namespace menyoo_vr {namespace source_ped {
+static const uint64_t PLAYER_PED_ID=0xe2d3d51028f0428aULL;
+static const uint64_t GET_PED_DRAWABLE_VARIATION=0x5355baa621c153cfULL;
+static const uint64_t GET_PED_TEXTURE_VARIATION=0xf1050e548c37f4a5ULL;
+static const uint64_t GET_PED_PALETTE_VARIATION=0x272ab65a4e7277b4ULL;
+static const uint64_t GET_NUMBER_OF_PED_DRAWABLE_VARIATIONS=0x37684f94e628d1acULL;
+static const uint64_t GET_NUMBER_OF_PED_TEXTURE_VARIATIONS=0x91e7da9eaffb9499ULL;
+static const uint64_t SET_PED_COMPONENT_VARIATION=0xe3752b10dc995e95ULL;
+static const uint64_t GET_PED_PROP_INDEX=0xf2bc143f97765619ULL;
+static const uint64_t GET_PED_PROP_TEXTURE_INDEX=0x7252a84eced5e1d4ULL;
+static const uint64_t GET_NUMBER_OF_PED_PROP_DRAWABLE_VARIATIONS=0x83174885c2f9e9d2ULL;
+static const uint64_t GET_NUMBER_OF_PED_PROP_TEXTURE_VARIATIONS=0x7827f3e641387ab3ULL;
+static const uint64_t SET_PED_PROP_INDEX=0xd9d122a54ffe62b8ULL;
+static const uint64_t CLEAR_PED_PROP=0x920bb8b58bb3563aULL;
+static const uint64_t CLEAR_ALL_PED_PROPS=0x9c726995fd3f93ebULL;
+static const uint64_t SET_PED_RANDOM_COMPONENT_VARIATION=0x6e9c0f9eac1f29fdULL;
+static const uint64_t SET_PED_RANDOM_PROPS=0xc9cf12827770bd57ULL;
+static const uint64_t SET_PED_DEFAULT_COMPONENT_VARIATION=0xdcb52c614b3660ecULL;
+}}

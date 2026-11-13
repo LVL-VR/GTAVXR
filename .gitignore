@@ -1,0 +1,16 @@
+# Working outputs and player data
+out/
+build/
+local-cache/
+profiles/
+sessions/
+*.exe
+*.dll
+*.asi
+*.pdb
+*.map
+*.zst
+*.zip
+*.7z
+__pycache__/
+*.pyc

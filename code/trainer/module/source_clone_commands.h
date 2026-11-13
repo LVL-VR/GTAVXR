@@ -1,0 +1,36 @@
+#pragma once
+#include <stdint.h>
+namespace menyoo_vr {namespace source_clone {
+static const uint64_t CLONE_PED=0x67e4cf00756bc7f7ULL;
+static const uint64_t PLAYER_ID=0x9e2d6c50374fcfa9ULL;
+static const uint64_t GET_PLAYER_GROUP=0xfd8e434495ec2f26ULL;
+static const uint64_t SET_BLOCKING_OF_NON_TEMPORARY_EVENTS=0x50274a7eaca3133aULL;
+static const uint64_t SET_PED_COMBAT_ABILITY=0x395228f7a14c6543ULL;
+static const uint64_t SET_PED_FIRING_PATTERN=0x8913620f26b565ceULL;
+static const uint64_t SET_PED_SHOOT_RATE=0xc97ba48bc273a1f3ULL;
+static const uint64_t SET_PED_KEEP_TASK=0xabc2ca6f28903308ULL;
+static const uint64_t GET_PED_GROUP_INDEX=0x188e8a7343f4234fULL;
+static const uint64_t IS_PED_IN_GROUP=0x611ad675982bebccULL;
+static const uint64_t CREATE_GROUP=0x0cc2bcb995d30ca3ULL;
+static const uint64_t GET_GROUP_SIZE=0x7afff71021be70ebULL;
+static const uint64_t SET_PED_AS_GROUP_LEADER=0xaa1f79c4006d9ae2ULL;
+static const uint64_t SET_PED_AS_GROUP_MEMBER=0xf23e6f5690771f71ULL;
+static const uint64_t SET_GROUP_SEPARATION_RANGE=0x05ff7bcaaef919b8ULL;
+static const uint64_t SET_GROUP_FORMATION_SPACING=0x4d7356aac1800b4eULL;
+static const uint64_t GIVE_DELAYED_WEAPON_TO_PED=0x5399a284d9fad3bdULL;
+static const uint64_t SET_CURRENT_PED_WEAPON=0x202b28feabec4034ULL;
+static const uint64_t TASK_COMBAT_PED=0xc1a74225341aa9fbULL;
+static const uint64_t TASK_COMBAT_PED_TIMED=0x5fc4a511155d6f9aULL;
+static const uint64_t TASK_SHOOT_AT_ENTITY=0x913e191f1f726271ULL;
+static const uint64_t TASK_PUT_PED_DIRECTLY_INTO_MELEE=0x957211dc68d2869fULL;
+static const uint64_t TASK_COMBAT_HATED_TARGETS_AROUND_PED=0x766d377a16f499e3ULL;
+static const uint64_t OPEN_SEQUENCE_TASK=0xa888f8cc04f25cc8ULL;
+static const uint64_t CLOSE_SEQUENCE_TASK=0xc963a45b50851768ULL;
+static const uint64_t TASK_PERFORM_SEQUENCE=0x8acada903fcaa42fULL;
+static const uint64_t SET_SEQUENCE_TO_REPEAT=0x3f2b528df27c8a9fULL;
+static const uint64_t CLEAR_SEQUENCE_TASK=0x7461d7c5ba953bc7ULL;
+static const uint64_t GET_ENTITY_HEADING=0x82fe2343f8bdff0bULL;
+static const uint64_t SET_ENTITY_HEADING=0xbbf86885619695ceULL;
+static const uint64_t SET_PED_AS_NO_LONGER_NEEDED=0xb3822db3d538c8f3ULL;
+static const uint64_t DOES_ENTITY_EXIST=0xe5965cdf24f93a9fULL;
+}}
