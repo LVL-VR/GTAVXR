@@ -1265,9 +1265,7 @@ class Menu
         case MENU_APPEARANCE:
             if (selected_ == 0)
             {
-                settings.appearance.language = settings.appearance.language == menyoo_vr::English
-                                                   ? menyoo_vr::Spanish
-                                                   : menyoo_vr::English;
+                settings.appearance.language = menyoo_vr::nextLanguage(settings.appearance.language);
                 return true;
             }
             return false;
@@ -2013,9 +2011,7 @@ class Menu
         else if (page_ == MENU_APPEARANCE)
         {
             if (selected_ == 0)
-                settings.appearance.language = settings.appearance.language == menyoo_vr::English
-                                                   ? menyoo_vr::Spanish
-                                                   : menyoo_vr::English;
+                settings.appearance.language = menyoo_vr::nextLanguage(settings.appearance.language);
             else if (selected_ == 1)
                 go(MENU_COLOURS);
             else if (selected_ == 2)
