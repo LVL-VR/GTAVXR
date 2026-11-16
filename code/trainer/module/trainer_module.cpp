@@ -441,7 +441,7 @@ static int tick(const Input2*input,Frame2*frame){
  if(!input||!frame||input->size!=sizeof(*input)||input->version!=ModuleAbiVersion3||frame->size!=sizeof(*frame)||frame->version!=ModuleAbiVersion3)return BadAbi;
  memset(frame,0,sizeof(*frame));frame->size=sizeof(*frame);frame->version=ModuleAbiVersion3;
  if(!attached||executing||owner!=GetCurrentThreadId())return WrongContext;
- if(input->permissions!=RequiredPermissions||!input->session||!input->generation||input->event>ModuleFavourite||input->visible>1||input->language>1||input->closeRequested>1)return InvalidInput;
+ if(input->permissions!=RequiredPermissions||!input->session||!input->generation||input->event>ModuleFavourite||input->visible>1||input->language>2||input->closeRequested>1)return InvalidInput;
  if(!session){
   if(!runtime.attach(input->session)||!runtime.resets().bindToggle(pauseClock,NULL)||!runtime.resets().bindToggle(freezeWanted,NULL)||
      !weather.bind(host,runtime.resets(),input->session)||!playerActions.bind(host,runtime.resets(),input->session)||

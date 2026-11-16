@@ -70,7 +70,7 @@ inline Appearance loadAppearance(const char* path)
         return appearance;
     // Called on settings initialization only, never for row/frame presentation.
     const unsigned language = GetPrivateProfileIntA("MenuAppearance", "language", English, path);
-    if (language <= Spanish)
+    if (language <= Portuguese)
         appearance.language = language;
     char colours[192] = {};
     GetPrivateProfileStringA("MenuAppearance", "colours", "", colours, sizeof(colours), path);

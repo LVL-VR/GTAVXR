@@ -11,7 +11,7 @@ inline void resetAppearance(Appearance& a)
 {
     const uint32_t language = a.language;
     a = defaultAppearance();
-    a.language = language <= Spanish ? language : English;
+    a.language = language <= Portuguese ? language : English;
 }
 inline bool editColour(Appearance& a, unsigned role, unsigned channel, int delta)
 {
@@ -37,6 +37,13 @@ inline const char* colourLabel(unsigned role, uint32_t language)
                         "Texto seleccionado",
                         "Selecci\303\263n",
                         "Texto de ayuda"};
-    return role < ColourRoleCount ? (language == Spanish ? es[role] : en[role]) : "";
+    const char* pt[] = {"Cabe\303\247alho",
+                        "Fundo",
+                        "Texto do t\303\255tulo",
+                        "Texto da op\303\247\303\243o",
+                        "Texto selecionado",
+                        "Sele\303\247\303\243o",
+                        "Texto de ajuda"};
+    return role < ColourRoleCount ? (language == Spanish ? es[role] : (language == Portuguese ? pt[role] : en[role])) : "";
 }
 }

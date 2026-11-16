@@ -65,8 +65,8 @@ namespace GtavxrSuite {
             return id!=null&&id.StartsWith(prefix,StringComparison.Ordinal)
                 ? id.Substring(prefix.Length).Replace('-','.') : Title("en");
         }
-        public List<string> Notes(string lang){return lang=="en"&&notes_en!=null&&notes_en.Count>0?notes_en:notes;}
-        public string Title(string lang){return lang=="en"&&!String.IsNullOrEmpty(title_en)?title_en:title;}
+        public List<string> Notes(string lang){return lang!="es"&&notes_en!=null&&notes_en.Count>0?notes_en:notes;}
+        public string Title(string lang){return lang!="es"&&!String.IsNullOrEmpty(title_en)?title_en:title;}
     }
 
     // ---------- Mods ----------

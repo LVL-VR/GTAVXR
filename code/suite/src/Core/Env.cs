@@ -9,7 +9,7 @@ namespace GtavxrSuite {
     // Everything the Suite remembers between runs. Small, human-readable, written atomically.
     public class SuiteSettings {
         public string schema {get;set;}
-        public string language {get;set;}          // "es" | "en"
+        public string language {get;set;}          // "es" | "en" | "pt"
         public string game_dir {get;set;}
         public string user_data_dir {get;set;}     // Documents\Rockstar Games\GTA V
         public string openxr_manifest {get;set;}   // before 2.4.0: the manifest found at first run (now only "auto" or openxr_runtime)
@@ -87,7 +87,7 @@ namespace GtavxrSuite {
             if(!File.Exists(SettingsFile))return new SuiteSettings{schema="gtavxr-suite2-settings-v1",language="en",openxr_runtime=XrRuntimes.Auto};
             var s=Json.Read<SuiteSettings>(SettingsFile);
             if(s.schema!="gtavxr-suite2-settings-v1")throw new InvalidDataException("Unknown settings file");
-            if(s.language!="en"&&s.language!="es")s.language="en";
+            if(s.language!="en"&&s.language!="es"&&s.language!="pt")s.language="en";
             // 2.4.0: the manifest saved at first run becomes "Automatico" (on that PC the active runtime is the same one)
             if(String.IsNullOrEmpty(s.openxr_runtime))s.openxr_runtime=XrRuntimes.Auto;
             return s;

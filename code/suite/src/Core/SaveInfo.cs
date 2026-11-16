@@ -52,7 +52,7 @@ namespace GtavxrSuite {
             return saves.Count==0?null:saves[0];
         }
         public string Short(string lang){
-            string p=percent.ToString("0.#",lang=="es"?CultureInfo.GetCultureInfo("es-ES"):CultureInfo.InvariantCulture);
+            string p=percent.ToString("0.#",lang=="es"?CultureInfo.GetCultureInfo("es-ES"):lang=="pt"?CultureInfo.GetCultureInfo("pt-BR"):CultureInfo.InvariantCulture);
             return mission+" · "+p+" %";
         }
     }

@@ -82,7 +82,25 @@ namespace GtavxrSuite.Content {
         public static CatMod MatchOiv(string name){return Get().mods.FirstOrDefault(m=>m.match!=null&&m.match.oiv_name!=null&&System.Text.RegularExpressions.Regex.IsMatch((name??"").Trim(),m.match.oiv_name,System.Text.RegularExpressions.RegexOptions.IgnoreCase));}
         public static CatMod MatchPack(string pack){return Get().mods.FirstOrDefault(m=>m.match!=null&&m.match.pack!=null&&System.Text.RegularExpressions.Regex.IsMatch(pack??"",m.match.pack,System.Text.RegularExpressions.RegexOptions.IgnoreCase));}
         public static CatMod MatchScript(IEnumerable<string> dlls){return Get().mods.FirstOrDefault(m=>m.match!=null&&m.match.script_dll!=null&&dlls.Any(d=>System.Text.RegularExpressions.Regex.IsMatch(d??"",m.match.script_dll,System.Text.RegularExpressions.RegexOptions.IgnoreCase)));}
-        public static string T(Dictionary<string,string> t,string lang){string v;return t==null?"":t.TryGetValue(lang,out v)||t.TryGetValue("en",out v)?v:t.Values.FirstOrDefault()??"";}
+        // Brazilian Portuguese lives in content-catalog.pt.json, keyed by the English text, so the catalog (and its hash in
+        // every content build key) stays the same. A text without a Portuguese entry falls back to English.
+        public class PtCatalog { public string schema {get;set;} public Dictionary<string,string> pt {get;set;} }
+        static Dictionary<string,string> pt;
+        static Dictionary<string,string> Portuguese(){
+            if(pt==null){
+                var map=new Dictionary<string,string>();
+                using(var s=Assembly.GetExecutingAssembly().GetManifestResourceStream("GtavxrSuite.content-catalog.pt.json"))if(s!=null)using(var r=new StreamReader(s)){
+                    var c=new JavaScriptSerializer{MaxJsonLength=4*1024*1024}.Deserialize<PtCatalog>(r.ReadToEnd());
+                    if(c.schema!="gtavxr-suite2-content-catalog-pt-v1")throw new InvalidDataException("content catalog pt schema");
+                    if(c.pt!=null)map=c.pt;
+                }
+                pt=map;
+            }
+            return pt;
+        }
+        public static string T(Dictionary<string,string> t,string lang){string v,en;
+            if(lang=="pt"&&t!=null&&t.TryGetValue("en",out en)&&Portuguese().TryGetValue(en,out v))return v;
+            return t==null?"":t.TryGetValue(lang,out v)||t.TryGetValue("en",out v)?v:t.Values.FirstOrDefault()??"";}
 
         // Every option of a mod with its key ("wov.traffic.deformation"), value for this profile and why it is blocked.
         // known: the states of the mods before it (a requirement can name another mod's option).

@@ -57,7 +57,7 @@ class Transport {
 public:
  std::string title;std::vector<Row>rows;
  Transport():selected_(0),event_(NoEvent),previousAllowed_(false),destination_(-1),routeSymbol_(NULL),language_(English){context_.origin=Root;context_.section=General;context_.feature=Ordinary;context_.flags=0;}
- bool language(uint32_t value){if(value>Spanish)return false;language_=value;return true;}
+ bool language(uint32_t value){if(value>Portuguese)return false;language_=value;return true;}
  void routeResolver(const char*(*resolver)(int)){routeSymbol_=resolver;}
  void begin(Origin origin,Section section,unsigned selected,Event event){context_.origin=origin;context_.section=section;context_.feature=Ordinary;context_.flags=0;selected_=selected;event_=event;previousAllowed_=false;destination_=-1;title.clear();rows.clear();}
  bool add(const std::string&label,Kind kind,const std::string&value,int submenu=-1,unsigned flags=0,Feature explicitFeature=Ordinary){

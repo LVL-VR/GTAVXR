@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 namespace menyoo_vr {
-enum LanguageId { English=0,Spanish=1 };
+enum LanguageId { English=0,Spanish=1,Portuguese=2 };
 enum ColourRole { Header,Background,TitleText,OptionText,SelectedText,Selection,HelpText,ColourRoleCount };
 struct Colour {uint32_t r,g,b,a;};
 struct Appearance {uint32_t size,version,language,reserved;Colour colour[ColourRoleCount];};
@@ -13,7 +13,7 @@ inline Appearance defaultAppearance(){
  for(unsigned i=0;i<ColourRoleCount;++i)a.colour[i]=palette[i];return a;
 }
 inline bool validAppearance(const Appearance&a){
- if(a.size!=sizeof(a)||a.version!=1||a.language>Spanish||a.reserved)return false;
+ if(a.size!=sizeof(a)||a.version!=1||a.language>Portuguese||a.reserved)return false;
  for(unsigned i=0;i<ColourRoleCount;++i){const Colour&c=a.colour[i];if(c.r>255||c.g>255||c.b>255||c.a>255)return false;}return true;
 }
 }

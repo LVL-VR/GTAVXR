@@ -22,7 +22,7 @@ public:
  int tick(const Input2&input){
   if(!attached_||insideTick_||owner_!=GetCurrentThreadId())return WrongContext;
   if(input.size!=sizeof(input)||input.version!=ModuleAbiVersion3||input.permissions!=RequiredPermissions||
-     input.session!=session_||!input.generation||input.event>ModuleFavourite||input.visible>1||input.language>1||input.closeRequested>1||input.milliseconds<milliseconds_)return InvalidInput;
+     input.session!=session_||!input.generation||input.event>ModuleFavourite||input.visible>1||input.language>2||input.closeRequested>1||input.milliseconds<milliseconds_)return InvalidInput;
   if(input.generation<=generation_)return AlreadyUpdated;
   generation_=input.generation;milliseconds_=input.milliseconds;insideTick_=true;
   struct TickExit {bool*flag;explicit TickExit(bool&value):flag(&value){}~TickExit(){*flag=false;}}exit(insideTick_);
