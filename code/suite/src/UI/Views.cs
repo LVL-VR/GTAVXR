@@ -142,7 +142,7 @@ namespace GtavxrSuite {
             var root=new StackPanel{Margin=new Thickness(28,22,28,28)};
             root.Children.Add(new StickerText(L.S("set.title").ToUpperInvariant(),30));
             var rows=new StackPanel();
-            var lang=U.Row(8,U.Btn("Español",L.Lang=="es"?"Primary":"Btn",()=>SetLang("es")),U.Btn("English",L.Lang=="en"?"Primary":"Btn",()=>SetLang("en")));
+            var lang=U.Row(8,U.Btn("Español",L.Lang=="es"?"Primary":"Btn",()=>SetLang("es")),U.Btn("English",L.Lang=="en"?"Primary":"Btn",()=>SetLang("en")),U.Btn("Português",L.Lang=="pt"?"Primary":"Btn",()=>SetLang("pt")));
             rows.Children.Add(Row(L.S("set.lang"),lang,null));
             var game=U.Text(s.Env.GameDir??L.S("fr.game.no"),14,Theme.Text);game.FontFamily=Theme.Mono;game.TextWrapping=TextWrapping.NoWrap;game.TextTrimming=TextTrimming.CharacterEllipsis;game.Margin=new Thickness(0,0,12,0);game.ToolTip=s.Env.GameDir;
             rows.Children.Add(Row(L.S("set.game"),game,U.Btn(L.S("set.change"),"Btn",ChooseGame)));

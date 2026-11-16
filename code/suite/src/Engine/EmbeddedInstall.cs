@@ -81,7 +81,7 @@ namespace GtavxrSuite {
             layer.Apply(version,deploymentMods,
                         (what,done,total)=>Step(progress,"game",done,total),false);
             if (newProfile && migrateProfile==null) {
-                if (previous==null) profile=imports.CreateProfile(L.Lang=="en"?"VR Story":"Historia VR",version.id,true,null);
+                if (previous==null) profile=imports.CreateProfile(L.Lang!="es"?"VR Story":"Historia VR",version.id,true,null);
                 else profile=imports.CopyForEmbeddedRelease(previous,version.id);
             }
             env.Dir("embedded");

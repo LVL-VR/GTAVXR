@@ -537,7 +537,7 @@ namespace GtavxrSuite {
             TextOptions.SetTextFormattingMode(w,TextFormattingMode.Display);
             WindowChrome.SetWindowChrome(w,new WindowChrome{CaptionHeight=Shell.TitleHeight,ResizeBorderThickness=new Thickness(6),GlassFrameThickness=new Thickness(0),CornerRadius=new CornerRadius(0),UseAeroCaptionButtons=false});
             try{var ico=System.Drawing.Icon.ExtractAssociatedIcon(Program.SelfPath);w.Icon=System.Windows.Interop.Imaging.CreateBitmapSourceFromHIcon(ico.Handle,Int32Rect.Empty,System.Windows.Media.Imaging.BitmapSizeOptions.FromEmptyOptions());}catch(Exception){}
-            w.Closing+=(o,e)=>{if(state.Busy){e.Cancel=true;shell.Toast(L.Lang=="en"?"Wait until the game closes and your progress is saved.":"Espera a que se cierre el juego y se guarde tu partida.");}};
+            w.Closing+=(o,e)=>{if(state.Busy){e.Cancel=true;shell.Toast(L.Lang!="es"?"Wait until the game closes and your progress is saved.":"Espera a que se cierre el juego y se guarde tu partida.");}};
             shell.Window=w;
             return w;
         }
@@ -556,7 +556,7 @@ namespace GtavxrSuite {
             EnsureApp();var app=Application.Current;
             bool created;
             using(var single=new System.Threading.Mutex(true,"Local\\GTAVXR_Suite2",out created)){
-            if(!created){MessageBox.Show(L.Lang=="en"?"GTAVXR is already open.":"GTAVXR ya está abierto.","GTAVXR");return 0;}
+            if(!created){MessageBox.Show(L.Lang!="es"?"GTAVXR is already open.":"GTAVXR ya está abierto.","GTAVXR");return 0;}
             Env env;
             try{
                 string path=library==null?ResolveDataLocation():SafeFs.Root(library);
@@ -566,7 +566,7 @@ namespace GtavxrSuite {
                 env=Env.Product(path);
                 env.ManagedLocation=library==null;
             }
-            catch(Exception e){L.Lang=System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName=="es"?"es":"en";MessageBox.Show(Shell.Explain(e),"GTAVXR");return 1;}
+            catch(Exception e){L.Lang=L.SystemLang();MessageBox.Show(Shell.Explain(e),"GTAVXR");return 1;}
 
             var state=new AppState(env);
             var shell=new Shell(state);
@@ -591,7 +591,7 @@ namespace GtavxrSuite {
         }
 
         static string LocateData(DataLocation location,Exception error) {
-                L.Lang=System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName=="es"?"es":"en";
+                L.Lang=L.SystemLang();
                 string question=L.Lang=="es"?"¿Quieres localizar una biblioteca existente?":"Do you want to locate an existing Suite library?";
                 if(MessageBox.Show(Shell.Explain(error)+"\n\n"+question,"GTAVXR",MessageBoxButton.YesNo)!=MessageBoxResult.Yes)
                     return null;

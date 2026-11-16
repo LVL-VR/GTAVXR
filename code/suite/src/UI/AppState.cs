@@ -29,7 +29,7 @@ namespace GtavxrSuite {
         public AppState(Env env){Env=env;Lib=new Library(env);Imp=new Importers(env);Session=new PlaySession(env);}
 
         public void Reload(){
-            Settings=Env.LoadSettings();L.Lang=Settings.language=="en"?"en":"es";
+            Settings=Env.LoadSettings();L.Lang=Settings.language=="en"||Settings.language=="pt"?Settings.language:"es";
             Versions=Lib.Versions();Mods=Lib.Mods();Profiles=Lib.Profiles();
             try{Installed=new GameLayer(Env).State();}catch(Exception){Installed=null;}
             if(!Demo){

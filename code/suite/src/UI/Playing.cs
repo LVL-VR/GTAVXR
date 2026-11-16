@@ -74,7 +74,7 @@ namespace GtavxrSuite {
         }
         public void Clock(TimeSpan t){clockRow.Content=new FlapText(t.ToString(@"hh\:mm\:ss"),8,Theme.Sign,22);}
         public static string Word(string step){
-            bool en=L.Lang=="en";
+            bool en=L.Lang!="es";
             switch(step){
                 case "content":return en?"LOADING MODS":"CARGANDO MODS";
                 case "game":return en?"PREPARING":"PREPARANDO";

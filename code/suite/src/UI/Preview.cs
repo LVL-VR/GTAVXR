@@ -17,7 +17,7 @@ namespace GtavxrSuite {
         public static object RenderAll(string folder){
             folder=SafeFs.Root(folder);if(Directory.Exists(folder))throw new InvalidDataException("Fresh folder required");Directory.CreateDirectory(folder);
             var rows=new List<object>();
-            foreach(string lang in new[]{"es","en"})foreach(string v in Views){
+            foreach(string lang in new[]{"es","en","pt"})foreach(string v in Views){
                 string png=Path.Combine(folder,v+"-"+lang+".png");Render(v,lang,png,Path.Combine(folder,"demo-"+v+"-"+lang));
                 rows.Add(new{view=v,locale=lang,png=Path.GetFileName(png),sha256=SafeFs.Hash(png)});
             }
@@ -85,12 +85,12 @@ namespace GtavxrSuite {
             string src=Path.Combine(root,"src");Directory.CreateDirectory(src);
             Func<string,string,FileRef> put=(rel,text)=>{string p=Path.Combine(src,Ids.New());File.WriteAllText(p,text);return blobs.PutFile(p,rel);};
             var retail=LegacyGamePolicy.Legacy3889();
-            var stable=new VersionManifest{id="125-dual",build="125",title="Dual",channel="stable",notes=new List<string>{lang=="en"?"The approved version.":"La versión aprobada."},retail=retail,
+            var stable=new VersionManifest{id="125-dual",build="125",title="Dual",channel="stable",notes=new List<string>{lang!="es"?"The approved version.":"La versión aprobada."},retail=retail,
                 files=new List<FileRef>{put("GTAVXR_SourceBaseline.exe","x")},runtime=new List<FileRef>(),mvga="none",launch=new LaunchContract{args=new List<string>()}};
-            var test=new VersionManifest{id="155v2",build="155",title=lang=="en"?"Vehicles":"Vehículos",channel="test",retail=retail,files=new List<FileRef>{put("GTAVXR_SourceBaseline.exe","y")},runtime=new List<FileRef>(),
-                notes=new List<string>{lang=="en"?"Open doors, bonnet, boot and ramps by grabbing them with your free hand.":"Abre puertas, capó, maletero y rampas agarrándolos con la mano libre."},mvga="switch",mvga_arg="-gtavxrMvga",launch=new LaunchContract{args=new List<string>()}};
+            var test=new VersionManifest{id="155v2",build="155",title=lang!="es"?"Vehicles":"Vehículos",channel="test",retail=retail,files=new List<FileRef>{put("GTAVXR_SourceBaseline.exe","y")},runtime=new List<FileRef>(),
+                notes=new List<string>{lang!="es"?"Open doors, bonnet, boot and ramps by grabbing them with your free hand.":"Abre puertas, capó, maletero y rampas agarrándolos con la mano libre."},mvga="switch",mvga_arg="-gtavxrMvga",launch=new LaunchContract{args=new List<string>()}};
             lib.SaveVersion(stable);lib.SaveVersion(test);
-            var mvga=new ModManifest{id="mvga-2-65-vr",name="Make Visuals Great Again",version=lang=="en"?"2.65 · adapted to VR":"2.65 · adaptado a VR",category="graphics",loadable=true,kind="mvga-native",family="mvga",
+            var mvga=new ModManifest{id="mvga-2-65-vr",name="Make Visuals Great Again",version=lang!="es"?"2.65 · adapted to VR":"2.65 · adaptado a VR",category="graphics",loadable=true,kind="mvga-native",family="mvga",
                 files=new List<FileRef>{new FileRef{path="gtavxr_mvga147/common/x",sha256=new string('A',64),bytes=33554432}},args=new List<string>{"-gtavxrMvga"}};
             var drive=new ModManifest{id="mod-drivev",name="DriveV",version="7.5",category="driving",loadable=false,kind="archive",family="drivev",files=new List<FileRef>(),archive=new FileRef{path="DriveV.zip",sha256=new string('B',64),bytes=22999437}};
             var forests=new ModManifest{id="mod-forests",name="Forests of San Andreas",version="5.7",category="map",loadable=false,kind="archive",family="forests",files=new List<FileRef>(),archive=new FileRef{path="f.zip",sha256=new string('C',64),bytes=412000000}};
@@ -103,9 +103,9 @@ namespace GtavxrSuite {
                 string ini=null;if(vr){ini=Path.Combine(root,Ids.New()+".ini");File.WriteAllText(ini,"[VR]\n");}
                 var p=imp.CreateFrom(name,ver,u,UserTree.Snapshot(u),ini,"demo");p=lib.Profile(p.id);p.color=color;lib.SaveProfile(p);return p;
             };
-            var a=mk(lang=="en"?"VR Story":"Historia VR","125-dual",lang=="en"?"(Autosave) Complications (22.5%) - x":"(Autoguardado) Cambios (22.5%) - x",0,true);
-            var b=mk(lang=="en"?"No mods":"Sin mods","125-dual",lang=="en"?"Franklin and Lamar (4.1%) - x":"Franklin y Lamar (4.1%) - x",2,true);
-            var c=mk(lang=="en"?"Test 155":"Prueba 155","155v2",lang=="en"?"Pulling Favors (12.0%) - x":"Favores (12.0%) - x",1,false);c=lib.Profile(c.id);if(view!="mods-guide")c.mods.Add(mvga.id);lib.SaveProfile(c);lib.SetTest(c.id,true);
+            var a=mk(lang!="es"?"VR Story":"Historia VR","125-dual",lang!="es"?"(Autosave) Complications (22.5%) - x":"(Autoguardado) Cambios (22.5%) - x",0,true);
+            var b=mk(lang!="es"?"No mods":"Sin mods","125-dual",lang!="es"?"Franklin and Lamar (4.1%) - x":"Franklin y Lamar (4.1%) - x",2,true);
+            var c=mk(lang!="es"?"Test 155":"Prueba 155","155v2",lang!="es"?"Pulling Favors (12.0%) - x":"Favores (12.0%) - x",1,false);c=lib.Profile(c.id);if(view!="mods-guide")c.mods.Add(mvga.id);lib.SaveProfile(c);lib.SetTest(c.id,true);
             a=lib.Profile(a.id);a.last_played_utc=DateTime.UtcNow.AddDays(-2).ToString("o");
             if(view.StartsWith("play-gate-"))a.image=view.Substring("play-gate-".Length);   // --render play-gate-<id>: that profile picture
             lib.SaveProfile(a);
@@ -113,13 +113,13 @@ namespace GtavxrSuite {
             string selected=a.id;
             if(view=="play-content"||view.StartsWith("play-personalize-")){
                 // a 166 profile with the content mods the Suite builds at Play (World of Variety, WoV Plus, V4EVER) and a few changed options
-                var world=new VersionManifest{id="166",build="166",title=lang=="en"?"Content mods":"Mods de contenido",channel="stable",content="profile",retail=retail,files=new List<FileRef>{put("GTAVXR_SourceBaseline.exe","z")},runtime=new List<FileRef>(),
+                var world=new VersionManifest{id="166",build="166",title=lang!="es"?"Content mods":"Mods de contenido",channel="stable",content="profile",retail=retail,files=new List<FileRef>{put("GTAVXR_SourceBaseline.exe","z")},runtime=new List<FileRef>(),
                     notes=new List<string>{"x"},mvga="switch",mvga_arg="-gtavxrMvga",launch=new LaunchContract{args=new List<string>()}};
                 lib.SaveVersion(world);
                 Func<string,string,string,string,ModManifest> cm=(id,name,ver,cat)=>{var m=new ModManifest{id=id,name=name,version=ver,category=Content.ContentCatalog.Mod(cat).category??"map",loadable=true,kind="content-source",family="content-src-"+cat,
                     files=new List<FileRef>(),args=new List<string>(),added_utc=DateTime.UtcNow.ToString("o"),tested_utc=DateTime.UtcNow.ToString("o"),source=new ContentSourceInfo{format=cat=="v4ever"?"pack":"oiv",catalog=cat,pack=cat=="v4ever"?"v4evermod":null}};lib.SaveMod(m);return m;};
                 var wov=cm("demo-wov","World of Variety","8.0","wov");var plus=cm("demo-wovplus","World Of Variety Plus","10.1","wovplus");var v4=cm("demo-v4ever","V4EVER","1.0","v4ever");
-                var d=mk(lang=="en"?"Living city":"Ciudad viva","166",lang=="en"?"Pulling Favors (12.0%) - x":"Favores (12.0%) - x",3,true);d=lib.Profile(d.id);
+                var d=mk(lang!="es"?"Living city":"Ciudad viva","166",lang!="es"?"Pulling Favors (12.0%) - x":"Favores (12.0%) - x",3,true);d=lib.Profile(d.id);
                 d.mods=new List<string>{wov.id,plus.id,v4.id};
                 d.options=new Dictionary<string,string>{{"wov.traffic.deformation","off"},{"wov.peds.umbrellas","off"},{"wov.variety","1.5"},{"wovplus.extra_density","on"},{"wovplus.extra_density.peds_density","120"}};
                 lib.SaveProfile(d);
@@ -128,10 +128,10 @@ namespace GtavxrSuite {
             }
             if(view=="play-graphics"||view=="settings"){
                 // 167-neural: a suite-mode version with the per-eye DLSS chain, a profile on the Neural preset, example DLSS files
-                var nv=new VersionManifest{id="167-neural",build="167",title=lang=="en"?"Neural graphics (DLSS)":"Graficos neurales (DLSS)",channel="test",retail=retail,files=new List<FileRef>{put("GTAVXR_SourceBaseline.exe","n")},runtime=new List<FileRef>(),
+                var nv=new VersionManifest{id="167-neural",build="167",title=lang!="es"?"Neural graphics (DLSS)":"Graficos neurales (DLSS)",channel="test",retail=retail,files=new List<FileRef>{put("GTAVXR_SourceBaseline.exe","n")},runtime=new List<FileRef>(),
                     notes=new List<string>{"x"},mvga="none",neural=new NeuralContract{dlss_dir_env="GTAVXR_DLSS_DIR"},launch=new LaunchContract{args=new List<string>(),session_mode="suite",settings_mode="suite"}};
                 lib.SaveVersion(nv);
-                var g=mk(lang=="en"?"Neural":"Neural","167-neural",lang=="en"?"Pulling Favors (12.0%) - x":"Favores (12.0%) - x",4,true);
+                var g=mk(lang!="es"?"Neural":"Neural","167-neural",lang!="es"?"Pulling Favors (12.0%) - x":"Favores (12.0%) - x",4,true);
                 File.WriteAllText(lib.VrSettingsFile(g.id),Graphics.Write("[VR]\r\n",new GraphicsChoice{preset="neural",upscale="quality",neural=true,intensity=60}));
                 string dl=env.Dir("dlss");
                 NeuralSuiteTests.FakeDll(Path.Combine(dl,Dlss.SrModel),"NVIDIA Corporation","NVIDIA DLSS","310.8.0.0",Dlss.Exports);
