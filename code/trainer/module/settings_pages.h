@@ -6,9 +6,10 @@ enum SharedSettingsRoute { SettingsLanguage=1,SettingsThemes,SettingsColours,Set
 struct SettingsPageResult {int route;bool changed;SettingsPageResult():route(0),changed(false){}};
 inline SettingsPageResult sharedAppearancePage(Transport&menu,Appearance&appearance){
  SettingsPageResult result;menu.language(appearance.language);menu.setTitle("Settings");
- const bool selected=menu.add("Language",ChoiceRow,appearance.language==Spanish?"Spanish":"English",-1,0,Language);
+ const bool selected=menu.add("Language",ChoiceRow,appearance.language==Spanish?"Spanish":appearance.language==Portuguese?"Portuguese":"English",-1,0,Language);
  if(selected&&(menu.event()==Accept||menu.event()==Left||menu.event()==Right)){
-  appearance.language=appearance.language==Spanish?English:Spanish;result.changed=true;
+  // English -> Spanish -> Portuguese -> English.
+  appearance.language=appearance.language==English?Spanish:appearance.language==Spanish?Portuguese:English;result.changed=true;
  }
  if(menu.add("Theme",ActionRow,"",SettingsThemes,0,Theme)&&menu.event()==Accept)result.route=SettingsThemes;
  if(menu.add("Colour Selector",ActionRow,"",SettingsColours,0,ColourSelector)&&menu.event()==Accept)result.route=SettingsColours;
