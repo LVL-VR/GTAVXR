@@ -1,6 +1,9 @@
 # Update Log
 
 ## 2026-11-18
+* **Update**: Root cause of the DLSS blit fallback: the patched exe's malformed export directory crashes d3d12 DllMain; repaired in memory by the bridge — [DLSS d3d12 load fallback](/fixes/dlss-d3d12-load-fallback.md).
+* **Creation**: Cheeky/VD implicit layers disabled per GTAVXR launch after CreateInstance -32 — [Implicit OpenXR layers](/fixes/implicit-openxr-layers.md).
+* **Creation**: DLSS SR/NR blit fallback at d3d12_dll and the System32 retry — [DLSS d3d12 load fallback](/fixes/dlss-d3d12-load-fallback.md).
 * **Creation**: Bundle for the PSVR2/SteamVR fork of GTAVXR 1.0.2 — [Getting started](/getting-started.md).
 * **Creation**: Measured PSVR2 runtime, the maintainer's SteamVR binding and audio override — [PSVR2 through SteamVR](/hardware/psvr2-steamvr.md).
 * **Creation**: Bridge → GxInput → game flow and the SteamVR menu and D-pad chords — [Input pipeline](/architecture/input-pipeline.md).
