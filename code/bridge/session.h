@@ -175,7 +175,7 @@ struct Session {
         }
     }
 
-    bool steamVrInput=false;
+    bool steamVrInput=false,psvr2MenuLogged=false,psvr2ShiftLogged=false;
 
     void initialize(ID3D11Device*d,uint32_t w,uint32_t h,const wchar_t*loader,PreopenedXr* ready=nullptr) {
         demand(d&&w&&h&&w<=4096&&h<=4096&&!instance,"XR_INITIALIZE_INPUT");
@@ -204,6 +204,9 @@ struct Session {
         }
         XrSystemProperties uiProperties{XR_TYPE_SYSTEM_PROPERTIES};
         check(api.GetSystemProperties(instance,system,&uiProperties),"UiSystemProperties");
+        // SteamVR reports "SteamVR/OpenXR : playstation_vr2" for PSVR2 through the PC adapter.
+        actions.psvr2=strstr(uiProperties.systemName,"playstation_vr2")!=nullptr;
+        log(std::string("XR_SYSTEM name=")+uiProperties.systemName+" psvr2="+(actions.psvr2?"1":"0"));
         uiMaxLayers=(std::min)(uiProperties.graphicsProperties.maxLayerCount,16u);
         uiMaxWidth=uiProperties.graphicsProperties.maxSwapchainImageWidth;uiMaxHeight=uiProperties.graphicsProperties.maxSwapchainImageHeight;
         demand(uiMaxLayers&&uiMaxWidth&&uiMaxHeight,"XR_UI_CAPABILITIES");
@@ -272,6 +275,8 @@ struct Session {
                 if(change.session==session&&change.referenceSpaceType==XR_REFERENCE_SPACE_TYPE_LOCAL)pauseSpaceChange=change.changeTime;
                 continue;
             }
+            if(event.type==XR_TYPE_EVENT_DATA_INTERACTION_PROFILE_CHANGED){log("XR_INPUT_PROFILE "+actions.current_profiles());
+                log("XR_INPUT_BOUND "+actions.bound_sources());continue;}
             if(event.type!=XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED)continue;
             auto&s=*reinterpret_cast<XrEventDataSessionStateChanged*>(&event);demand(s.session==session,"XR_EVENT_SESSION");state=s.state;
             log("STATE value="+std::to_string(state));
@@ -362,6 +367,10 @@ struct Session {
         demand(!terminal,"XR_TERMINAL");
         auto out=actions.read(running&&!terminal,state==XR_SESSION_STATE_FOCUSED);
         if(steamVrInput)out.reserved|=GX_INPUT_STEAMVR;
+        if(actions.remap.menuSeen&&!psvr2MenuLogged){psvr2MenuLogged=true;log("XR_PSVR2 triangle_touch_r3_menu confirmed");}
+        if(actions.remap.shiftSeen&&!psvr2ShiftLogged){psvr2ShiftLogged=true;log("XR_PSVR2 dpad_shift confirmed");}
+        if(actions.physicalNew)log("XR_INPUT first_press buttons=0x"+[](uint32_t v){char t[12];sprintf_s(t,"%02X",v);return std::string(t);}(actions.physicalNew)+" (A1 B2 X4 Y8 L3=10 R3=20 MENU=40)");
+        if(actions.modifierNew)log("XR_PSVR2 modifier_touch first_seen");
         const uint64_t hapticNow=GetTickCount64();
         const bool freshRumble=rumbleTick&&hapticNow-rumbleTick<=200;
         spatialOwnerGate.input(hapticNow,freshRumble?nativeRumble.heavy:0,freshRumble?nativeRumble.light:0);
