@@ -2,7 +2,27 @@
 
 GTAVXR runs on PSVR2 with the PC adapter through **SteamVR's OpenXR runtime**. In the Suite, choose **SteamVR** as the OpenXR runtime (or leave it on **Automatic** with SteamVR set as the active Windows runtime).
 
-## How the Sense controllers appear
+## Install the preview bridge
+
+This fork's release ZIP contains `gtavxr_native_openxr.dll` (the bridge), `CheekyOpenXRLayer.dll` (optional CheekyFoveatedDLSS shim) and `install-psvr2-bridge.ps1`. You need GTAVXR 1.0.2 installed by the official Suite first.
+
+1. Close GTA and the Suite.
+2. Extract the ZIP anywhere and run: `powershell -ExecutionPolicy Bypass -File install-psvr2-bridge.ps1` (add `-DryRun` first to see what it will do). No administrator rights are needed.
+3. Start SteamVR, then the Suite, then **Play**.
+
+The script replaces the bridge in the Suite's runtime folder and updates the hash the Suite checks before Play. The first time, it backs up the official files to `<Suite data>\psvr2-bridge-backup`. `-Restore` puts them back. Reinstalling or updating GTAVXR through the Suite restores the official bridge. Run the script again afterwards.
+
+**DLSS:** put `nvngx_dlss.dll` (and `nvngx_dlssnr.dll` for Neural Rendering) in **Settings → DLSS**. This build fixes the 1.0.2 issue where DLSS never ran and the image was only stretched (`EYE_CHAIN state=blit_fallback stage=d3d12_dll` in the log).
+
+**Optional CheekyFoveatedDLSS (eye-tracked foveated DLSS):**
+
+1. Put the Cheeky fork's standalone `CheekyFoveatedDLSSHost.dll`, `CheekyFoveatedDLSSRuntime.dll` and its ini files in `<GTA V folder>\CheekyFoveatedDLSS\`. Add `nvngx_dlssnr.dll` there too for Cheeky NR.
+2. Run the installer. It places the shim there.
+3. Use GTAVXR's **Performance (SR)** preset and let Cheeky handle NR.
+4. For eye tracking, PSVR2Toolkit's eye tracking must be running. Set Cheeky's foveation centre to **OpenXR gaze**.
+5. Press F11 for Cheeky's menu, which also appears in the headset.
+
+
 
 SteamVR presents the Sense controllers to OpenXR apps as **Oculus Touch**, and your **SteamVR binding for GTAVXR decides which physical control drives each action**. The bridge only reads those actions. It never reads the controllers directly. The table shows the default auto-remap plus the two manual additions.
 
