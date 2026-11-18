@@ -9,6 +9,9 @@
 #include <string>
 
 namespace gx_exe {
+// The result of the repair made when the bridge DLL loaded (see bridge.cpp): the eye-size query runs before create(),
+// and an implicit OpenXR layer that imports d3d12.dll (OFXR does) would otherwise fail to load in that first instance.
+inline std::string& load_time_result() { static std::string s; return s; }
 // Returns a log line when the entry was repaired, empty otherwise.
 inline std::string repair_export_directory() {
     auto* base = reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));

@@ -8,6 +8,9 @@
 
 namespace {
 thread_local std::string error_text;
+// Repair the game exe's export directory while the bridge DLL loads (kernel32 only), before the eye-size query or any
+// OpenXR layer can load d3d12.dll. Logged by the first create().
+static const bool gxExportRepairedAtLoad=(gx_exe::load_time_result()=gx_exe::repair_export_directory(),true);
 native_xr::PreopenedXr preopened; // Once per process, before the first SteamVR session.
 struct Bridge {
     native_xr::Session xr;
@@ -52,7 +55,8 @@ int GX_CALL create(const GxConfig*c,void**out) noexcept {
         native_xr::demand(b->log!=INVALID_HANDLE_VALUE,"EXCLUSIVE_LOG_CREATE");
         // Return the failed partially initialized handle too, so cleanup never loses ownership.
         auto*p=b.release();*out=p;p->xr.log=[p](const std::string&s){p->write(s);};
-        {const auto fixed=gx_exe::repair_export_directory();if(!fixed.empty())p->write(fixed);} // before anything loads d3d12.dll
+        {const auto fixed=gx_exe::repair_export_directory();const auto&early=gx_exe::load_time_result();   // normally already done at load
+         if(!early.empty()){p->write(early+" at=load");gx_exe::load_time_result().clear();}else if(!fixed.empty())p->write(fixed);}
         {const auto cheeky=gx_cheeky::start_once();if(!cheeky.empty())p->write(cheeky);}    // before the eye chain loads nvngx_dlss.dll
         const std::wstring path(c->log_path);const auto directory=path.substr(0,path.find_last_of(L"/\\"));
         wchar_t play[8]={},diagnostic[8]={};
