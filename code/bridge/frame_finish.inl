@@ -86,11 +86,16 @@
             layers[count++]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&options);
             }
         }
+        XrCompositionLayerQuad cheekyMenu{XR_TYPE_COMPOSITION_LAYER_QUAD};
+        if(world&&count<layerLimit&&perf147.cpu("cheeky_menu_layer",[&](){return cheeky_menu_layer(cheekyMenu);}))
+            layers[count++]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&cheekyMenu);
+        else if(!world&&cheekyMenuOpen)cheeky_menu_closed();
         std::array<XrCompositionLayerQuad,4> opticLayers{};unsigned opticCount=0;
         if(world&&count<layerLimit&&perf147.cpu("scope_optic_layers",[&](){return scope_optic_layers(opticLayers.data(),layerLimit-count,opticCount);}))
             for(unsigned i=0;i<opticCount;++i)layers[count++]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&opticLayers[i]);
         if(haveSubtitles)layers[count++]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&subtitles);
         XrFrameEndInfo ei{XR_TYPE_FRAME_END_INFO};ei.displayTime=timing.predictedDisplayTime;ei.environmentBlendMode=XR_ENVIRONMENT_BLEND_MODE_OPAQUE;ei.layerCount=count;ei.layers=submit?layers:nullptr;
+        if(submit&&!cancel)publish_cheeky_gaze(); // read by Cheeky at the next frame's DLSS evaluations
         health("end_before");perf147.seal(context.Get());check(perf147.cpu("xrEndFrame",[&](){return api.EndFrame(session,&ei);}),"EndFrame");begun=false;scopeSources.invalidate();invalidate_scope_optics(!cancel);health("end_after");if(submit){if(scopePanel.active)++scope_frames;else if(panel)++menu_frames;else ++submitted;}
         perf147.cpuRecord(frame,generation,cancel?"cancel":"finish",timing.predictedDisplayTime,timing.predictedDisplayPeriod,timing.shouldRender!=0,perfStart147,Perf147::now());
         LARGE_INTEGER qpc;QueryPerformanceCounter(&qpc);

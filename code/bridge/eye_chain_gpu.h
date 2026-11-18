@@ -209,6 +209,13 @@ public:
     bool timing = false;           // developer mode readings (GPU ms per stage)
 
     bool active() const { return configured_; }
+    // COM identity of the D3D12 resource DLSS SR writes for this eye (as Cheeky's canonical_identity) and its size.
+    bool output_identity(unsigned e, uint64_t& id, uint32_t& w, uint32_t& h) const {
+        if (!configured_ || e > 1 || !eyes_[e].out12) return false;
+        IUnknown* u = nullptr;
+        if (FAILED(eyes_[e].out12->QueryInterface(IID_PPV_ARGS(&u))) || !u) return false;
+        id = uint64_t(reinterpret_cast<uintptr_t>(u)); u->Release(); w = ow_; h = oh_; return true;
+    }
     uint32_t render_width() const { return rw_; }
     uint32_t render_height() const { return rh_; }
 

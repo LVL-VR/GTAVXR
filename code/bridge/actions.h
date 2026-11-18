@@ -45,12 +45,15 @@ class Actions {
     XrAction stick{},trigger{},grip{},primary{},secondary{},click{},menu{},secondaryTouch{},dpadShift{};
     XrAction gripPose{},aimPose{};XrSpace gripSpaces[2]{},aimSpaces[2]{};bool synced=false;
     XrAction rumble{};bool rumbling[2]={false,false};
+    XrAction eyeGaze{};XrSpace eyeGazeSpace{}; // XR_EXT_eye_gaze_interaction, only when the instance enabled it
     gx_haptic::HapticPublication hapticPublication;
     uint32_t activeMask=0;
 public:
     gx_psvr2::Remap remap;       // PSVR2 input post-processing; inert when psvr2 is false.
     uint32_t unsupportedProfiles=0; // Bit p corresponds to kProfiles[p].
     bool psvr2=false;            // SteamVR systemName playstation_vr2; set before the first read.
+    bool eyeGazeRequested=false; // instance has XR_EXT_eye_gaze_interaction and the system supports it; set before initialize
+    bool eyeGazeBound=false;     // the eye gaze profile suggestion was accepted
     uint32_t physicalSeen=0,physicalNew=0; // GX_* bits from the runtime before PSVR2 synthesis; New = first seen this read.
     bool modifierSeen=false,modifierNew=false;
 private:
@@ -120,6 +123,15 @@ public:
             if(r==XR_ERROR_PATH_UNSUPPORTED)unsupportedProfiles|=1u<<p;
             else ok(r,profile.path);
         }
+        eyeGazeBound=false;
+        if(eyeGazeRequested){ // no subaction path: /user/eyes_ext only
+            XrActionCreateInfo g{XR_TYPE_ACTION_CREATE_INFO};strcpy_s(g.actionName,"eye_gaze");strcpy_s(g.localizedActionName,"Eye Gaze");
+            g.actionType=XR_ACTION_TYPE_POSE_INPUT;ok(createAction(set,&g,&eyeGaze),"eye_gaze");
+            XrActionSuggestedBinding gb{eyeGaze,path("/user/eyes_ext/input/gaze_ext/pose")};
+            XrInteractionProfileSuggestedBinding b{XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING};
+            b.interactionProfile=path("/interaction_profiles/ext/eye_gaze_interaction");b.countSuggestedBindings=1;b.suggestedBindings=&gb;
+            eyeGazeBound=XR_SUCCEEDED(suggest(instance,&b));
+        }
         XrSessionActionSetsAttachInfo a{XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO};a.countActionSets=1;a.actionSets=&set;
         ok(attach(session,&a),"Attach"); // exactly once, before BeginSession.
         for(unsigned h=0;h<2;++h){
@@ -128,6 +140,8 @@ public:
             ok(createSpace(session,&poseSpace,&gripSpaces[h]),"CreateGripSpace");
             poseSpace.action=aimPose;ok(createSpace(session,&poseSpace,&aimSpaces[h]),"CreateAimSpace");
         }
+        if(eyeGazeBound){XrActionSpaceCreateInfo gs{XR_TYPE_ACTION_SPACE_CREATE_INFO};gs.action=eyeGaze;gs.poseInActionSpace.orientation.w=1;
+            if(XR_FAILED(createSpace(session,&gs,&eyeGazeSpace))){eyeGazeSpace={};eyeGazeBound=false;}}
     }
     GxInput read(bool running,bool focused) {
         GxInput out{};out.size=sizeof(out);out.version=1;out.sequence=++sequence;
@@ -234,6 +248,16 @@ public:
         return out;
     }
     void stop_rumble(){synced=false;activeMask=0;native_rumble(0,0);}
+    // Eye gaze pose in base at time. active = the runtime reports an eye tracker bound; valid = a usable orientation.
+    bool locate_gaze(XrSpace base,XrTime time,XrPosef&out,bool&active){
+        active=false;if(!synced||!eyeGazeSpace||!base||time<=0)return false;
+        XrActionStateGetInfo g{XR_TYPE_ACTION_STATE_GET_INFO};g.action=eyeGaze;
+        XrActionStatePose st{XR_TYPE_ACTION_STATE_POSE};if(XR_FAILED(poseState(session,&g,&st)))return false;
+        active=st.isActive!=0;if(!active)return false;
+        XrSpaceLocation l{XR_TYPE_SPACE_LOCATION};if(XR_FAILED(locateSpace(eyeGazeSpace,base,time,&l)))return false;
+        if(!(l.locationFlags&XR_SPACE_LOCATION_ORIENTATION_VALID_BIT))return false;
+        out=l.pose;return true;
+    }
     uint32_t locate(XrSpace base,XrTime time,GxPose* out,bool aim=false) {
         out[0]=out[1]=GxPose{};
         if(!synced||!base||time<=0)return 0;
@@ -254,7 +278,7 @@ public:
         }
         return mask;
     }
-    void close_spaces(){stop_rumble();for(auto&s:gripSpaces)if(s){ok(destroySpace(s),"DestroyGripSpace");s={};}
+    void close_spaces(){stop_rumble();if(eyeGazeSpace){ok(destroySpace(eyeGazeSpace),"DestroyEyeGazeSpace");eyeGazeSpace={};}eyeGazeBound=false;for(auto&s:gripSpaces)if(s){ok(destroySpace(s),"DestroyGripSpace");s={};}
         for(auto&s:aimSpaces)if(s){ok(destroySpace(s),"DestroyAimSpace");s={};}}
     void close(){close_spaces();if(set){ok(destroySet(set),"DestroySet");set={};}session={};instance={};hapticPublication.reset();
         remap.reset();modifierSeen=modifierNew=false;physicalSeen=physicalNew=0;}

@@ -1,6 +1,9 @@
 # Update Log
 
 ## 2026-11-18
+* **Update**: Bridge publishes Cheeky's gaze/FOV snapshot through a GTAVXR shim; fixes the two-circle stereo misalignment and adds PSVR2 eye gaze — [Cheeky in GTAVXR](/operations/cheeky-standalone-in-gtavxr.md).
+* **Update**: Cheeky NR DLL placement and the F11 menu shown in the headset via the bridge — [Cheeky in GTAVXR](/operations/cheeky-standalone-in-gtavxr.md).
+* **Creation**: Cheeky standalone host loaded by the bridge — [Cheeky in GTAVXR](/operations/cheeky-standalone-in-gtavxr.md).
 * **Update**: Root cause of the DLSS blit fallback: the patched exe's malformed export directory crashes d3d12 DllMain; repaired in memory by the bridge — [DLSS d3d12 load fallback](/fixes/dlss-d3d12-load-fallback.md).
 * **Creation**: Cheeky/VD implicit layers disabled per GTAVXR launch after CreateInstance -32 — [Implicit OpenXR layers](/fixes/implicit-openxr-layers.md).
 * **Creation**: DLSS SR/NR blit fallback at d3d12_dll and the System32 retry — [DLSS d3d12 load fallback](/fixes/dlss-d3d12-load-fallback.md).

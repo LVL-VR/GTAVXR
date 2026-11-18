@@ -18,3 +18,10 @@ set_target_properties(gtavxr_ngx_forwarder PROPERTIES OUTPUT_NAME "nvngx.dll_gta
 target_compile_options(gtavxr_ngx_forwarder PRIVATE /W4 /EHsc)
 target_compile_definitions(gtavxr_ngx_forwarder PRIVATE NOMINMAX)
 target_link_libraries(gtavxr_ngx_forwarder PRIVATE user32 advapi32)
+
+# Gaze/menu shim for CheekyFoveatedDLSS (cheeky_gaze_shim.cpp): installed as <game>\CheekyFoveatedDLSS\CheekyOpenXRLayer.dll.
+add_library(gtavxr_cheeky_gaze_shim SHARED cheeky_gaze_shim.cpp)
+set_target_properties(gtavxr_cheeky_gaze_shim PROPERTIES OUTPUT_NAME "CheekyOpenXRLayer")
+target_compile_features(gtavxr_cheeky_gaze_shim PRIVATE cxx_std_20)
+target_compile_options(gtavxr_cheeky_gaze_shim PRIVATE /W4 /EHsc)
+target_compile_definitions(gtavxr_cheeky_gaze_shim PRIVATE NOMINMAX)

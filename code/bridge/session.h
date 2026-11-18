@@ -11,6 +11,7 @@
 #include <openxr/openxr_platform.h>
 #include <algorithm>
 #include <array>
+#include <atomic>
 #include <functional>
 #include <iomanip>
 #include <sstream>
@@ -23,6 +24,7 @@
 #include "xr_preopened.h"
 #include "bridge.h"
 #include "actions.h"
+#include "cheeky_host.h"
 #include "hands.h"
 #include "menu_bitmap.h"
 #include "menu_style_bitmap.h"
@@ -160,6 +162,8 @@ struct Session {
 #include "scope_optic_layer.inl"
 #include "scope_panel_layer.inl"
 #include "eye_chain_session.inl" // 167-neural A2/B2
+#include "cheeky_menu_layer.inl" // CheekyFoveatedDLSS F11 menu in the headset
+#include "cheeky_gaze_publish.inl" // CheekyFoveatedDLSS per-eye FOV/forward/gaze snapshot
 
     void health(const char*boundary) {
         demand(device.Get()!=nullptr,"XR_NO_DEVICE");
@@ -187,12 +191,12 @@ struct Session {
         }else{
             const auto started=GetTickCount64();
             demand(loader&&*loader&&api.Load(loader),"XR_LOADER");
-            const char* extension=XR_KHR_D3D11_ENABLE_EXTENSION_NAME;
+            const auto extensions=gx_cheeky::instance_extensions(api);
             XrInstanceCreateInfo ci{XR_TYPE_INSTANCE_CREATE_INFO};
             strcpy_s(ci.applicationInfo.applicationName,"GTAVXR Native");
             strcpy_s(ci.applicationInfo.engineName,"GTAVXR");
             ci.applicationInfo.apiVersion=steamvr_bootstrap_requested()?XR_API_VERSION_1_0:XR_CURRENT_API_VERSION;
-            ci.enabledExtensionCount=1;ci.enabledExtensionNames=&extension;
+            ci.enabledExtensionCount=uint32_t(extensions.size());ci.enabledExtensionNames=extensions.data();
             const XrResult created=api.CreateCompatibleInstance(ci,instance);
             log("XR_INSTANCE api="+std::to_string(XR_VERSION_MAJOR(ci.applicationInfo.apiVersion))+
                 "."+std::to_string(XR_VERSION_MINOR(ci.applicationInfo.apiVersion))+
@@ -203,7 +207,11 @@ struct Session {
             check(api.GetSystem(instance,&si,&system),"GetSystem");
         }
         XrSystemProperties uiProperties{XR_TYPE_SYSTEM_PROPERTIES};
+        XrSystemEyeGazeInteractionPropertiesEXT eyeGazeProperties{XR_TYPE_SYSTEM_EYE_GAZE_INTERACTION_PROPERTIES_EXT};
+        if(gx_cheeky::gaze_extension_enabled())uiProperties.next=&eyeGazeProperties; // chained only when the instance enabled it
         check(api.GetSystemProperties(instance,system,&uiProperties),"UiSystemProperties");
+        actions.eyeGazeRequested=gx_cheeky::gaze_extension_enabled()&&eyeGazeProperties.supportsEyeGazeInteraction;
+        if(gx_cheeky::gaze_extension_enabled())log(std::string("XR_EYE_GAZE extension=1 system_supported=")+(actions.eyeGazeRequested?"1":"0"));
         // SteamVR reports "SteamVR/OpenXR : playstation_vr2" for PSVR2 through the PC adapter.
         actions.psvr2=strstr(uiProperties.systemName,"playstation_vr2")!=nullptr;
         log(std::string("XR_SYSTEM name=")+uiProperties.systemName+" psvr2="+(actions.psvr2?"1":"0"));
@@ -366,6 +374,7 @@ struct Session {
         if(!begun)poll();
         demand(!terminal,"XR_TERMINAL");
         auto out=actions.read(running&&!terminal,state==XR_SESSION_STATE_FOCUSED);
+        cheeky_menu_input(out);
         if(steamVrInput)out.reserved|=GX_INPUT_STEAMVR;
         if(actions.remap.menuSeen&&!psvr2MenuLogged){psvr2MenuLogged=true;log("XR_PSVR2 triangle_touch_r3_menu confirmed");}
         if(actions.remap.shiftSeen&&!psvr2ShiftLogged){psvr2ShiftLogged=true;log("XR_PSVR2 dpad_shift confirmed");}
@@ -474,6 +483,7 @@ struct Session {
         if(begun)finish(0,0,true);
         close_eye_chain(); // 167-neural B2: before the swapchains it draws into
         close_overlay();
+        close_cheeky_menu();
         close_wrist();
         close_weapon_hud();
         close_hand_contexts();close_buttons_layer();close_fade_layer();close_native_ui();
