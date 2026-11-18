@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.25)
 project(gtavxr_runtime_bridge LANGUAGES CXX)
 
+# Static CRT, like the shipped bridge: no Visual C++ redistributable dependency.
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 find_path(OPENXR_INCLUDE_DIR NAMES openxr/openxr.h REQUIRED)
 
 add_library(gtavxr_native_openxr SHARED bridge.cpp)

@@ -14,3 +14,4 @@ sessions/
 *.7z
 __pycache__/
 *.pyc
+release/
