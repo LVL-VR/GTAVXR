@@ -3,12 +3,12 @@ gx_scope_panel::Frame scopePanel;
 Eye scopePanelEye;
 uint32_t scopePanelWidth=0,scopePanelHeight=0;
 uint64_t scope_frames=0;
-void reset_frame_presentation(){panel=false;scopePanel.reset();}
+void reset_frame_presentation(){panel=false;scopePanel.reset();reset_theatre_frame();}
 bool set_scope_panel(const GxScopePanel* p){
-    return !fault&&scopePanel.set(begun,copied,panel,p);
+    return !fault&&!theatre.active&&scopePanel.set(begun,copied,panel,p);
 }
 bool set_menu_panel(){
-    if(scopePanel.active)return false; // optional mode conflict must not fault the session
+    if(scopePanel.active||theatre.active)return false; // optional mode conflict must not fault the session
     demand(begun&&!copied,"MENU_FRAME_ORDER"); // preserve existing menu ordering contract
     panel=true;return true;
 }

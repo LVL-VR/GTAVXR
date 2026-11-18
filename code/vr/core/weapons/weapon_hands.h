@@ -1,4 +1,5 @@
 #pragma once
+#include "interaction_buttons.h"
 // On-foot native weapon ownership and trigger intent. No combat, ammo mutation,
  
 #include <stdint.h>
@@ -59,15 +60,16 @@ struct Input
     uint64_t actor, sequence, generation, poseFrame;
     unsigned epoch, hands, blockedHands;
     bool live, onFoot, paused, dead, ragdoll, online, missionBlocked, menu, wheel;
-    float trigger[2];
+    bool swapSupportButton;
+    float trigger[2], grip[2];
     Owner owner[2];
     Item item[2];
     Input()
         : actor(0), sequence(0), generation(0), poseFrame(0), epoch(0), hands(0), blockedHands(0),
           live(false), onFoot(false), paused(false), dead(false), ragdoll(false), online(false),
-          missionBlocked(false), menu(false), wheel(false)
+          missionBlocked(false), menu(false), wheel(false), swapSupportButton(false)
     {
-        trigger[0] = trigger[1] = 0;
+        trigger[0] = trigger[1] = grip[0] = grip[1] = 0;
         owner[0] = owner[1] = FREE;
     }
 };
@@ -87,7 +89,8 @@ inline bool eligible(const Input& i)
 {
     return i.live && i.onFoot && !i.paused && !i.dead && !i.ragdoll && !i.online && !i.missionBlocked &&
            !i.menu && !i.wheel && i.actor && i.epoch && i.sequence && i.generation && i.poseFrame &&
-           !(i.hands & ~3u) && !(i.blockedHands & ~3u) && _finite(i.trigger[0]) && _finite(i.trigger[1]);
+           !(i.hands & ~3u) && !(i.blockedHands & ~3u) && _finite(i.trigger[0]) && _finite(i.trigger[1]) &&
+           (!i.swapSupportButton || (_finite(i.grip[0]) && _finite(i.grip[1])));
 }
 inline bool available(const Input& i, unsigned h)
 {
@@ -139,6 +142,7 @@ class Resolver
     uint64_t actor_, sequence_, instance_[2], releaseFrame_[2];
     unsigned epoch_;
     bool held_[2], fired_[2], drain_[2], blocked_[2];
+    bool supportDrain_[2], swapped_;
 
   public:
     Resolver() : actor_(0), sequence_(0), epoch_(0)
@@ -148,11 +152,12 @@ class Resolver
     void reset()
     {
         actor_ = sequence_ = epoch_ = 0;
+        swapped_ = false;
         for (unsigned h = 0; h < 2; ++h)
         {
             releaseFrame_[h] = instance_[h] = 0;
             held_[h] = fired_[h] = blocked_[h] = false;
-            drain_[h] = true;
+            drain_[h] = supportDrain_[h] = true;
         }
     }
     Decision update(const Input& i)
@@ -167,13 +172,18 @@ class Resolver
             epoch_ = i.epoch;
         }
         sequence_ = i.sequence;
+        if (i.swapSupportButton != swapped_)
+        {
+            supportDrain_[0] = supportDrain_[1] = true;
+            swapped_ = i.swapSupportButton;
+        }
         if (!eligible(i))
         {
             for (unsigned h = 0; h < 2; ++h)
             {
                 releaseFrame_[h] = 0;
                 held_[h] = fired_[h] = blocked_[h] = false;
-                drain_[h] = true;
+                drain_[h] = supportDrain_[h] = true;
             }
             return out;
         }
@@ -192,7 +202,7 @@ class Resolver
             {
                 releaseFrame_[h] = 0;
                 held_[h] = fired_[h] = blocked_[h] = false;
-                drain_[h] = true;
+                drain_[h] = supportDrain_[h] = true;
                 continue;
             }
             if (i.trigger[h] < .2f)
@@ -238,7 +248,10 @@ class Resolver
             if (!available(i, h) || i.item[h].armed() || !available(i, gun) || !i.item[gun].armed() ||
                 !i.item[gun].twoHanded)
                 continue;
-            if (!drain_[h] && i.trigger[h] >= .2f)
+            const float supportValue = gx_weapon_buttons::support(swapped_, i.trigger[h], i.grip[h]);
+            if (supportValue < .2f)
+                supportDrain_[h] = false;
+            if ((swapped_ ? !supportDrain_[h] : !drain_[h]) && supportValue >= .2f)
             {
                 out.owner[h] = SUPPORT;
                 out.action[h] = REQUEST_SUPPORT;

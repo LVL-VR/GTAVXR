@@ -21,6 +21,7 @@
 #include <vector>
 #include <functional>
 #include "eye_chain.h"
+#include "eye_chain_log.h"
 #include "ngx_iface.h"
 #include "eye_chain_cs_bytes.h"
 #include "eye_chain_vs_bytes.h"
@@ -242,6 +243,22 @@ public:
         if(enabled && !nrWanted_) for(auto& e : eyes_) e.nrHistory = false;
         nrWanted_ = enabled != 0; intensity_ = intensity; compare_ = compare;
     }
+    void invalidate_history()
+    {
+        for(auto& eye : eyes_) eye.history = eye.nrHistory = false;
+        note_transition();
+    }
+    // Diagnostic only: report again which path each eye takes after a transition (bounded per session).
+    // It does not touch history or the processing itself.
+    void note_transition() { pairLog_.transition(sayer()); }
+    // A discarded pair never reaches present(): forget the guides and the depth reference handed over
+    // for it, so the next eye cannot consume them and the depth texture is released now.
+    void drop_pending()
+    {
+        pendingSet_ = pendingHas_ = false;
+        pendingDepth_.Reset();
+    }
+    bool pending() const { return pendingSet_ || pendingDepth_; }
     void status(GxEyeChainStatus& s) const
     {
         memset(&s, 0, sizeof(s)); s.size = sizeof(s); s.version = 1; s.state = state_; s.neural_active = nrReady_ && nrWanted_ ? 1u : 0u;
@@ -256,8 +273,15 @@ public:
         const bool had = pendingSet_; pendingSet_ = false;
         ComPtr<ID3D11Resource> depth; depth.Swap(pendingDepth_);
         if(state_ == gx_eye_chain::CHAIN && had && depth) {
-            try { run(c, e, generation, source, target, depth.Get()); return; } catch(const Error& x) { fail(x); }
+            try {
+                run(c, e, generation, source, target, depth.Get());
+                const bool nr = nrReady_ && nrWanted_ && eyes_[e].nrH;
+                pairLog_.success(e, generation, srOn_, nr, sayer());
+                return;
+            } catch(const Error& x) { fail(x); }
         }
+        pairLog_.fallback(e, generation, state_ != gx_eye_chain::CHAIN ? "blit_fallback" : had ? "missing_depth" : "missing_capture_inputs",
+                          sayer());
         eyes_[e].history = false; eyes_[e].nrHistory = false;
         plain(c, source, target);
     }
@@ -276,6 +300,7 @@ public:
         rb_.Reset(); qheap_.Reset(); for(auto& a : alloc_) a.Reset(); list_.Reset(); queue_.Reset(); fence11_.Reset(); fence12_.Reset(); dev12_.Reset();
         capture_.Reset(); captureCb_.Reset(); captureState_.Reset(); ctx4_.Reset(); dev5_.Reset(); pendingDepth_.Reset();
         blit_.close(); configured_ = false; state_ = gx_eye_chain::NATIVE;
+        pairLog_.close();
     }
 
 private:
@@ -298,8 +323,10 @@ private:
     bool configured_ = false, srOn_ = false, nrReady_ = false, nrWanted_ = false, nrTried_ = false;
     uint32_t rw_ = 0, rh_ = 0, ow_ = 0, oh_ = 0, upscale_ = 0, intensity_ = 50, compare_ = 0, state_ = gx_eye_chain::NATIVE, faultStage_ = 0;
     long faultCode_ = 0; std::string reason_, nrNote_; std::wstring dataDir_, dlssDir_, forwarderDir_; double ms_[4] = {};
+    gx_eye_chain_log::PairLog pairLog_;   // diagnostic only
 
     void say(const std::string& s) { try { log(s); } catch(...) {} }
+    auto sayer() { return [this](const std::string& s) { say(s); }; }
     static std::string hex(long v) { char b[16]; sprintf_s(b, "0x%08lX", (unsigned long)v); return b; }
     void fail(const Error& e)
     {
@@ -343,7 +370,8 @@ private:
         D3D11_BUFFER_DESC b{}; b.ByteWidth = sizeof(CaptureConstants); b.Usage = D3D11_USAGE_DEFAULT; b.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
         Hr(device_->CreateBuffer(&b, NULL, &captureCb_), "capture_constants");
         // D3D12 on the game's adapter, loaded only here (the native path never touches d3d12.dll)
-        HMODULE d3d12 = LoadLibraryW(L"d3d12.dll"); Need(d3d12 != NULL, "d3d12_dll");
+        HMODULE d3d12 = LoadLibraryW(L"d3d12.dll");
+        if(!d3d12) throw Error{"d3d12_dll", static_cast<long>(HRESULT_FROM_WIN32(GetLastError()))};
         auto create12 = reinterpret_cast<PFN_D3D12_CREATE_DEVICE>(GetProcAddress(d3d12, "D3D12CreateDevice")); Need(create12 != nullptr, "d3d12_entry");
         ComPtr<IDXGIDevice> dx; ComPtr<IDXGIAdapter> adapter; Hr(device_.As(&dx), "dxgi_device"); Hr(dx->GetAdapter(&adapter), "dxgi_adapter");
         Hr(create12(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&dev12_)), "d3d12_device");

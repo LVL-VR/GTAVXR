@@ -1,6 +1,6 @@
 #pragma once
  
-// traspasaba las paredes ... las colisiones con el mundo ... no est√°n funcionando como funcionaban en ... las manos").
+// traspasaba las paredes ... las colisiones con el mundo ... no est·n funcionando como funcionaban en ... las manos").
 // Pure solver (CPU-tested): the held weapon's REAL part capsules (weapon-root local frame) are swept from the previous SOLVED
 // pose to the desired (hand-driven) pose. The earliest BLOCKING hit (map/buildings, vehicles, fixed or heavy objects) stops
 // the weapon just before it (position AND rotation interpolated, like the arm stopping at a wall); LIGHT movable props never

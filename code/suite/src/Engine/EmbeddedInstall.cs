@@ -37,28 +37,29 @@ namespace GtavxrSuite {
         string InstallSelected(string profileId, Action<PlayProgress> progress, CancellationToken cancel,PlayOptions options) {
             cancel.ThrowIfCancellationRequested();
             var migration=new ReleaseMigration(env);
+            string bundleIdentity=EmbeddedRelease.DescriptorIdentity(cancel);
+            // An update from another release that stopped half way is resolved first, before this release is imported:
+            // its journal is verified and, when it is older, set aside for this installer's own plan.
+            migration.ResolvePending(EmbeddedRelease.VersionId,bundleIdentity);
             migration.CheckDowngrade(EmbeddedRelease.VersionId);
             var imports = new Importers(env);
             var version = lib.Version(EmbeddedRelease.VersionId);
-            string bundleIdentity=EmbeddedRelease.DescriptorIdentity(cancel);
-            if (version == null || !version.embedded_release || version.source_sha256!=bundleIdentity) {
-                Step(progress,"game",0,0);
-                string stage = SafeFs.Under(env.Dir("scratch"),"embedded-"+Ids.New());
-                try {
-                    EmbeddedRelease.Reconstruct(env.GameDir,stage,cancel);
-                    version = imports.ImportEmbedded(stage,(done,total)=>{
-                        cancel.ThrowIfCancellationRequested();
-                        Step(progress,"game",done,total);
-                    });
-                } finally { if (Directory.Exists(stage)) Directory.Delete(stage,true); }
-            } else EmbeddedRelease.VerifyRetailInputs(env.GameDir,cancel);
+            bool rebuild=version==null||!version.embedded_release||version.source_sha256!=bundleIdentity||
+                PackageRecordIncomplete(version)||EmbeddedRelease.RuntimeGaps(version).Count!=0;
+            if(!rebuild){
+                foreach(var file in version.files.Concat(version.runtime).GroupBy(f=>f.sha256).Select(group=>group.First())){
+                    cancel.ThrowIfCancellationRequested();
+                    if(!StoredCopyVerifies(file)){rebuild=true;break;}
+                }
+            }
+            if(rebuild)version=RebuildFromPackage(env.GameDir,bundleIdentity,cancel,progress);
+            else EmbeddedRelease.VerifyRetailInputs(env.GameDir,cancel);
             migration.CheckLibraries(version,profileId);
             string migrateProfile=migration.SelectProfile(version,profileId);
             var previous = lib.Profile(migrateProfile??profileId);
             bool newProfile = previous==null || previous.version!=version.id;
             var profile = newProfile ? new Profile { version=version.id, mods=previous==null?new List<string>():previous.mods,
                                                      options=previous==null?null:previous.options } : previous;
-            foreach(var file in version.runtime) blobs.Verify(file.sha256,file.bytes);
             MaterializeRuntime(version);
             var diagnostics=new List<string>();
             var omitted=new List<string>(options.OmittedMods);
@@ -67,7 +68,7 @@ namespace GtavxrSuite {
                 throw new OptionalComponentException(diagnostics,new PlayOptions { OmittedMods=omitted });
             var prepared = BuildSelection(profile,version,inputs,progress);
             var deploymentMods=prepared.mods.Where(m=>m.kind!="script").ToList();
-            var verifiedFiles=version.files.Concat(version.runtime).Concat(deploymentMods.SelectMany(m=>m.files??new List<FileRef>()));
+            var verifiedFiles=deploymentMods.SelectMany(m=>m.files??new List<FileRef>());
             foreach(var file in verifiedFiles.GroupBy(f=>f.sha256).Select(group=>group.First())){
                 cancel.ThrowIfCancellationRequested();
                 blobs.Verify(file.sha256,file.bytes);
@@ -90,8 +91,12 @@ namespace GtavxrSuite {
             });
             if(!env.Fixture)SelfInstall.RefreshInstalledLauncher();
             migration.Finish(version);
+            migration.RetirePublicMonitor(version);
+            LastUpdateKept=migration.Kept??new List<string>();
             return migrateProfile??profile.id;
         }
+        // Altered files of retired releases the last update kept aside (reports/damaged-store) instead of deleting.
+        public List<string> LastUpdateKept { get; private set; }
 
         static string InstalledPath(Env env,string versionId) {
             Ids.Check(versionId);
@@ -128,6 +133,10 @@ namespace GtavxrSuite {
             string retailExe=SafeFs.Under(env.GameDir,"GTA5.exe");
             if(!String.Equals(SafeFs.Hash(retailExe),EmbeddedRelease.RetailIdentity,StringComparison.Ordinal))
                 throw new InvalidDataException("DELTA_BASE_MISMATCH");
+            // 1.0.5 review: a record without the release's mandatory runtime never starts the game (Check files rebuilds it).
+            var gaps=EmbeddedRelease.RuntimeGaps(version);
+            if(gaps.Count!=0) throw new InvalidDataException("INSTALL_RUNTIME_INCOMPLETE:"+gaps[0]);
+            if(PackageRecordIncomplete(version))throw new InvalidDataException("INSTALL_REQUIRED");
             string runtime=RuntimeRoot(version);
             foreach(var file in version.runtime) {
                 try { SafeFs.AssertFile(SafeFs.Under(runtime,file.path),file.sha256,file.bytes); }

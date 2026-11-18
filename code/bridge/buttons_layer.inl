@@ -19,16 +19,9 @@ bool buttons_layer(XrCompositionLayerQuad&q){
     q.pose.orientation={float(p.qx),float(p.qy),float(p.qz),float(p.qw)};q.pose.position={float(p.x),float(p.y),float(p.z)};
     const float wide=float(gx_panel::BUTTONS_WIDTH*s);q.size={wide,wide*float(r.height)/float(r.width)};
     if(!place_panel(q,gx_panel::BUTTONS))return false;
-    auto&target=buttonsUiPanel;
-    if(target.width!=r.width||target.height!=r.height){close_ui_eye(target.eye);target.width=r.width;target.height=r.height;}
-    if(!target.eye.swap)create_ui_eye(target.eye,r.width,r.height);
-    auto*texture=acquire_ui_eye(target.eye,r.width,r.height);
-    demand(texture!=source->texture.Get(),"UI_BUTTONS_ALIAS");
-    perf147.gpu(context.Get(),"buttons_copy",-1,0,[&](){swap_copy(texture,source->texture.Get());});release_ui_eye(target.eye);
-    q.subImage.swapchain=target.eye.swap;q.subImage.imageArrayIndex=0;q.subImage.imageRect.offset={0,0};
-    q.subImage.imageRect.extent={int(r.width),int(r.height)};
+    if(!publish_ui_panel(q.subImage,buttonsUiPanel,*source,512,128,"buttons_copy"))return false;
     if(frame<=5||frame%600==0)log("BUTTONS_UI frame="+std::to_string(frame)+" anchor="+
         std::to_string(panelPlacements.panel[gx_panel::BUTTONS].anchor)+" height="+std::to_string(r.height));
     return true;
 }
-void close_buttons_layer(){close_ui_eye(buttonsUiPanel.eye);buttonsUiPanel.width=buttonsUiPanel.height=0;}
+void close_buttons_layer(){close_ui_panel(buttonsUiPanel);}

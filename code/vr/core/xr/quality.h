@@ -58,7 +58,7 @@ inline const char* modeLabel(unsigned m, bool es)
     if (m == RESTART_GAME)
         return es ? "reiniciar juego" : "restart game";
     if (m == GTA_RESET_UNVERIFIED)
-        return es ? "solo lectura: reinicio de gr√°ficos no verificado en VR"
+        return es ? "solo lectura: reinicio de gr·ficos no verificado en VR"
                   : "read-only: graphics reset unverified in VR";
     return "";
 }

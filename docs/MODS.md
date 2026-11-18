@@ -42,8 +42,8 @@ Open **VR Menu → Mods**, select **Pedestrians** or **Traffic and parked cars**
 ## Script Host and plugins
 
 - GTAVXR Script Host loads compiled scripts that use the ScriptHookVDotNet API supported by the selected version. The Suite inspects imported files and explains why a script cannot load.
-- The Suite checks **.asi** plugins that use Script Hook V for compatibility with the Host. A plugin that relies directly on the retail executable, calls an unsupported Host function, or targets Enhanced may require a different version of the mod.
+- Use the integrated Host for supported Script Hook V and ScriptHookVDotNet mods. Import their original packages through the Suite. The Suite checks **.asi** plugins that use Script Hook V for compatibility with the Host. A plugin that relies directly on the retail executable, calls an unsupported Host function, or targets Enhanced may require a different version of the mod.
 - Import the mod through the Suite so its Script Host can manage the files for each session. Source-only **.cs** or **.vb** scripts that require compilation and the older ScriptHookVDotNet 1 API are outside this workflow.
-- If the Suite flags a script as incompatible, read the reason on its mod entry and select a suitable Legacy version or disable it for that profile.
+- If the Suite flags a script as incompatible, read the reason on its mod entry and select a suitable Legacy version or disable it for that profile. Compatibility with a library such as NativeUI depends on the specific mod, its dependencies and the APIs it calls.
 
 If a mod imports but fails in-game, record its name, version, and exact error. Launch the same profile with that mod disabled to compare. [Troubleshooting](TROUBLESHOOTING.md#mods-and-graphics)

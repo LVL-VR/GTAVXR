@@ -32,6 +32,12 @@ The Suite stores working files, profiles, and session recovery data under **%LOC
 
 Open **Settings → Suite data → Open folder**. For the default location, you can also paste **%LOCALAPPDATA%\GTAVXR\Suite** into File Explorer. Use **Properties** to check the total size and identify the largest folder or file. Keep your profiles and session files for recovery. Share the name and size of the largest item privately, along with the free space on the Windows drive and the GTA drive. If the Suite folder is small or missing, report that too. If you already uninstalled GTA V Legacy and want the space back, see [Remove GTAVXR completely](INSTALLATION.md#remove-gtavxr-completely).
 
+## Crashes and blocked relaunches
+
+**Crash around an interior.** Version 1.0.5 fixes a crash when adjacent interiors share a portal and one of them unloads. If a crash still occurs, note the location, whether you were entering or leaving an interior, and which mods were enabled. Keep the session logs and the local minidump if one was written. [What to include in a report](#report-a-problem)
+
+**Access is denied when you press Play after quitting GTA.** Update to 1.0.5. The Suite now ignores confirmed exited processes that Windows still lists. If it says GTA is running, wait for the session to finish closing before you retry. File permission errors that name a path still follow the [installation recovery steps](#access-denied-during-installation).
+
 ## Headset and controllers
 
 - Wait until you can control your character in Story Mode. If the headset still shows no game image, focus the GTA window and press **F10** once. If it stays in flatscreen, record the runtime selected in the Suite and any OpenXR error in the session log.
@@ -49,14 +55,14 @@ Open **Settings → Suite data → Open folder**. For the default location, you 
 Recentering usually resolves camera, position, and body pose alignment problems. Try it first if the view faces the wrong way, appears displaced, or does not match your posture.
 
 1. Face forward in your usual standing or seated playing posture.
-2. Press **Menu** on the left controller and select **Recenter** on the main screen. You can also use **Quick actions → Recenter view**. Close the menu and check your position.
+2. Open the VR menu with the [shortcut for your runtime](VR_CONTROLS.md#open-the-vr-menu-and-recenter) and select **Recenter** on the main screen. Outside SteamVR, press and release **L3 + R3** with the sticks centered to recenter directly. You can also use **Quick actions → Recenter view**. Close the menu and check your position.
 3. If only the height is off, use **Settings → Calibration → Height** in the VR menu to adjust it for the current context. If the problem persists, report whether you were on foot or in a vehicle and what happened when you recentered. [VR controls](VR_CONTROLS.md)
 
 ## Mods and graphics
 
 - If a mod is marked incompatible, open its entry and read the reason. Check that you have the Legacy edition, required add-ons, and no conflicts. Launch the same profile with that mod disabled to isolate the issue. [Mods](MODS.md)
-- If DLSS or Neural Rendering does not activate, review the files under **Settings → DLSS**, the fallback the Suite offers, and the active mode shown in the VR menu. Try **Native** to check the base experience. [Graphics](GRAPHICS.md)
-- If OFXR shows no data, enable its layer before starting GTA and check its status while VR is active. Use one frame generation or interpolation mode at a time. If **F10** opens both menus, change the OFXR key binding. [OFXR Bridge](GRAPHICS.md#ofxr-bridge)
+- If DLSS or Neural Rendering does not activate, review **Settings → DLSS** and the active mode shown in the VR menu. Try **Native** to check the base experience. If the image changes when returning from pause, the scope or Stereo Theatre, report which transition triggered it. Keep the existing session OpenXR log so both eyes and any fallback can be checked. [Graphics](GRAPHICS.md)
+- If OFXR shows no data, enable its layer and **Export status.json** before starting GTA, then check its status while VR is active. The Suite shows the reason when a status does not belong to the running game. Use one frame generation or interpolation mode at a time. If **F10** opens OFXR too, change its menu key. In SteamVR, if **F9** also toggles OFXR diagnostic logging, configure a different GTAVXR menu key or turn OFXR logging on from its tray before launching. [OFXR Bridge](GRAPHICS.md#ofxr-bridge)
 
 - If a sound pack imports but has no effect in game, check that it is enabled in the active profile and report the exact pack. [Sound mods](MODS.md#sound-mods)
 
@@ -77,7 +83,9 @@ If the game closes or shows a fatal error, record whether it happened during sta
 | Roads or scenery are missing while driving | The mission or objective, location, vehicle, camera view, and active mods. Mention whether the camera was displaced too. |
 | A mission stops with an `InflateBegin` or decompression error | The full error text, including the resource filename at the end, and the exact versions of the mods enabled in that profile. |
 
-Open the active library from **Settings → Suite data → Open folder**, then open its `sessions` folder. Look for the folder dated closest to the incident. For a blank headset after Story Mode loads, share `native\xr.log` privately if it exists. If it is missing, share the same session's `native\native-runtime.log` or `session.json`.
+Open the active library from **Settings → Suite data → Open folder**, then open its `sessions` folder. Look for the folder dated closest to the incident. For a blank headset after Story Mode loads, share the newest `native\activation-NNNN\xr.log` privately. Older sessions may place it directly under `native`. If it is missing, share the same session's `native\native-runtime.log` or `session.json`.
+
+If GTAVXR crashes, look for `GTAVXR_CRASH` in the affected session's `native\native-runtime.log`, or check `native\native-stdout.log` if the runtime log is empty. When available, `native\gtavxr-crash.dmp` is a local minidump. It may contain process data. Share it privately only if support requests it. Keep the matching `session.json` and note the last screen or action before the crash.
 
 ### Default shader error or crash after a graphics change
 

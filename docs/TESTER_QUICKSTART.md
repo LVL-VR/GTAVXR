@@ -1,59 +1,17 @@
-# GTAVXR 1.0.2 tester quick start
+# Tester quick start
 
-Use the **GTAVXR.exe** shared with your test group. You need 64-bit Windows, a legal copy of **GTA V Legacy**, and a PC VR connection. **Quest 3 with Virtual Desktop and VDXR** is the reference setup.
+Use the exact **GTAVXR.exe** supplied for the test. The coordinator records the build, runtime, headset, controller profile, GPU, graphics preset and any active OpenXR layer. For ordinary play, use the [installation guide](INSTALLATION.md).
 
-## Install and start
+## Prepare the session
 
-1. Right-click **GTAVXR.exe** and select **Run as administrator**.
-2. Check that the Suite points to your Legacy folder. If needed, select **Choose folder** and pick the folder containing **GTA5.exe**. To store the Suite library on another drive, use **Change** under **Suite data** and reopen the Suite after the copy. Click **Continue**. [Suite data location](SUITE.md#choose-where-the-suite-stores-its-data)
-3. On the **Play** screen, click **Install GTAVXR** and wait for it to finish. If an earlier attempt left a recovery notice, click **Fix now** first.
-4. Under **Settings → Headset → Change**, select the OpenXR runtime for your PC VR connection. **Automatic** uses the active Windows runtime. For Virtual Desktop with VDXR, select VDXR.
-5. Open your profile's **Save** tab to copy your normal GTA saves or start a new story. Click **Play**. Once Story Mode loads, focus the game window and press **F10** if VR is off.
+1. For an update check, open the existing library and verify that the expected profiles and saves are available. Duplicate the profile before changing its controls or graphics for a test. [Suite and profiles](SUITE.md)
+2. Pick the runtime for your headset connection under **Suite → Settings → Headset** and prepare a Story save at **Franklin and Lamar** or later. Agree on the start with the headset wearer before launching. [Compatibility](COMPATIBILITY.md) · [Profiles and saves](SAVES.md)
+3. Prepare the required resolution, graphics preset and optional OFXR settings. The coordinator handles the logs and any keyboard or desktop-window steps. [Graphics](GRAPHICS.md)
+4. Open the VR menu using the [shortcut for the active runtime](VR_CONTROLS.md#open-the-vr-menu-and-recenter). With SteamVR, center both sticks, click **L3 + R3** and release both. Outside SteamVR, use the left **Menu** button and use the centered stick-click gesture to recenter.
 
-For your first VR session, load a save at **Franklin and Lamar** or later. If you start a new game, you can finish North Yankton with VR off. When the guard grabs Michael, press **F10** to turn VR off. Hold **Left Alt**, move the mouse toward Trevor, then release **Alt** to switch. A standard gamepad also works for that step. Press **F10** again to return to VR. [First session](FIRST_SESSION.md)
+## During and after the test
 
-## Quest Touch controls
-
-**Grip** is the side button. **Trigger** is the index-finger button. **L3** and **R3** mean clicking the left and right thumbsticks inward. The table uses the default bindings. **VR Menu → Settings → Weapons → Free hand buttons** exchanges which button supports the weapon and which one grabs reload parts or takes ammunition. Use **Grip for support** to support with grip and handle reload parts with the trigger on the free hand.
-
-| Action | Control |
-| --- | --- |
-| Move and turn on foot | Tilt the left thumbstick to move and the right thumbstick to turn. |
-| Open or close the VR menu | Press **Menu** on the left controller. Use a thumbstick to navigate, **A** to select, and **B** to go back. |
-| Recenter the camera or body | Face forward in your playing posture and select **VR Menu → Recenter**. Try this first if the camera, your position, or your body pose is out of alignment. |
-| Open the weapon wheel on foot | **Reach over your shoulder** with the hand on that side and hold its **grip**. Tilt that controller's thumbstick toward the weapon slot. Click the stick to cycle within that slot, then release the grip to equip the weapon in that hand. Both sides work on foot. |
-| Holster or draw the last weapon on foot | Reach over that shoulder and give the grip a quick press and release with the thumbstick centered. |
-| Aim, fire, and dual-wield | Aim with the hand holding the weapon and fire with its trigger. To dual-wield, equip a compatible weapon in each hand using that hand's wheel. Each trigger fires its own weapon. |
-| Support a weapon or reload | Bring your free hand to the support point and hold that hand's trigger. Under **VR Menu → Settings → Weapons → Reload per family**, choose **Quick** or **Realistic**. With standard bindings, **B** requests a standard reload. Dual-wielding uses Quick reload. |
-| Grab, release, or throw an object | Reach toward a grabbable object with an empty hand and hold that controller's **grip**. Release to let go. To throw it, release while moving your hand in the direction you want to throw. |
-| Push an object | Move an empty hand against the object. Adjust grip and push strength in **VR Menu → Settings → Physics**. |
-| Punch with an empty hand | Hold that hand's **grip and trigger** together and make the punching motion. |
-| Use an interaction prompt | Hold **L3** and press **A** for the primary interaction or **B** for the secondary one. |
-| Take cover or use a special ability | Hold **L3** on foot for cover. Click **L3** twice for a special ability when available. A single short click toggles stealth on foot. |
-| Use the phone | Press **R3**. Navigate with the right thumbstick, use **A** to select, and use **B** to go back. |
-| Use the virtual D-pad | With both sticks centered, hold **L3 and R3**, then tilt the right thumbstick. Release both clicks when done. |
-| Enter, exit, and drive | With standard bindings, press **Y** to enter or exit. The right trigger accelerates and the left trigger brakes. For motion steering, hold the side grip over the wheel and move your hand. Release and grab it again if it stops tracking. |
-| Switch the driving camera | From the driver's seat, click **R3** twice within about 0.3 seconds. Repeat to switch back. Close the phone, weapon or radio wheel, and menus first. |
-| Open a wheel in a vehicle | Reach over your **right shoulder** for weapons or your **left shoulder** for radio. Hold the matching grip and select with that hand's stick. |
-| Use motion controls in an aircraft | Enable **Tracked steering** under **VR Menu → Settings → Vehicles**. In a supported aircraft, reach for the cockpit control, hold the grip, and move your hand. Use **Planes and helicopters** to adjust sensitivity and pitch inversion. |
-| Use the immersive parachute | In the VR menu, select **Settings → Movement → Parachute → Immersive**. In freefall, hold the grip near the visible ripcord and pull. After deployment, grip the steering handles and pull down on the side you want to turn toward. |
-| Switch protagonists after the intro | Choose **VR Menu → Story Character** once Story Mode has unlocked more than one protagonist. |
-| Switch between VR and flatscreen | Focus the GTA window and press **F10**. |
-
-Open **VR Menu → Settings → HUD and interfaces** to customize the HUD. **Controller buttons** lets you remap GTA's pad buttons separately on foot, in vehicles, and in aircraft. Its **VR action bindings** submenu lets you change special ability, cover, stealth, phone takeout, the driving camera, and aircraft fire and weapon cycling. **Movement** adjusts turning, and **Calibration** adjusts height, hands, and weapons. For a single weapon in the left hand, **Weapons → Realistic in the left hand** enables physical reload on supported weapons. **Reload help glow** highlights the part to handle. To unlock a supported revolver cylinder or break-action weapon, keep the weapon hand's **grip** and **A** (right) or **X** (left) held while moving the part. [Weapon-specific reloads](VR_CONTROLS.md#reloading)
-
-For subtitles, turn them on in GTA, enable **Wrist HUD** and **HUD visibility → Subtitles (panel)** in the VR menu, then close the menu. The panel sits just below the center of your view. [HUD settings](VR_MENU.md#find-hud-elements-in-vr)
-
-Open **VR Menu → Trainer** for the in-game trainer. Select with **A**, go back with **B**, and use **Y** to toggle a favorite where available. [Trainer options and laser sight](VR_MENU.md#use-the-trainer)
-
-## During the test
-
-- If a cutscene makes you feel motion sick, skip it when the game offers that option. If the camera ends up below the map or looking at the ocean, select **VR Menu → Recenter**.
-- If a mission step stalls with motion controllers, press **F10**, finish that step with a keyboard and mouse or a standard gamepad, and switch back to VR.
-- For a new setup, start with a base profile. Enable mods or graphics options one at a time so you can see what changes.
-- Keep **DirectX Version** at **DirectX 11** and use **High** or **Very High** for **Shader Quality**. If outdoor shadows flicker between the eyes, choose a **Soft Shadows** preset other than **NVIDIA PCSS**. [GTA graphics settings](GRAPHICS.md#gta-graphics-settings)
-- Save in GTA and select **Force GTA to close** in the Suite. Wait for it to finish closing the session before launching again.
-
-When reporting a problem, include your **GTAVXR version, store, headset, OpenXR runtime, mission or location, and exact steps**. Add the error text or a screenshot when you can. For graphics issues, include your GPU, driver, and active mods or graphics options.
-
-[Full controls](VR_CONTROLS.md) · [VR menu and settings](VR_MENU.md) · [Known issues](KNOWN_ISSUES.md) · [Installation and recovery](INSTALLATION.md)
+- Start with the agreed test blocks. Check that the world, HUD and controls are visible and usable in the headset. Report **pass**, **fail**, or **not tested** for each block. The wearer can give the result aloud or after removing the headset.
+- The [controls guide](VR_CONTROLS.md) covers default actions and bindings, including double R3 for third-person driving, the phone, free-hand weapon inputs and physical reloads. The [VR menu guide](VR_MENU.md) covers Stereo Theatre, HUD placement and the Trainer.
+- Save in GTA, select **Force GTA to close** in the Suite and wait for the session to finish. Follow the [closing instructions](FIRST_SESSION.md#close-the-game-and-play-again) if the process remains.
+- The coordinator correlates the observation with the exact session. Use the [report checklist](TROUBLESHOOTING.md#report-a-problem) and share logs privately when they contain local paths.

@@ -1,6 +1,6 @@
 # VR menu and Trainer
 
-In Story Mode with VR active, press **Menu** on the left controller. Release the buttons and center the thumbstick before navigating. Use a thumbstick to highlight a row or change a value, **A** to open or apply, **B** to go back, and **Menu** to close. If the GTA pause menu is open, exit it first. [VR controls](VR_CONTROLS.md)
+In Story Mode with VR active, use the [menu shortcut for your runtime](VR_CONTROLS.md#open-the-vr-menu-and-recenter). Center the sticks before navigating. Use a thumbstick to highlight a row or change a value, **A** to open or apply, and **B** to go back. Use **Return to Game** or the menu shortcut to close the menu. Exit the GTA pause menu first if it is open.
 
 ## Main menu
 
@@ -13,7 +13,7 @@ In Story Mode with VR active, press **Menu** on the left controller. Release the
 | **Mods** | Adjusts pedestrians, traffic, and Online maps in Story for the active profile. [In-game world settings](MODS.md#in-game-world-settings) |
 | **Story Character** | Opens the Story Mode protagonist selector. |
 | **Character Menu** | Opens GTA's character interaction menu when available. |
-| **Recenter** | Centers the view in the direction you are looking and resets the height reference. Also available under **Quick actions → Recenter view**. |
+| **Recenter** | Centers the view in the direction you are looking and resets the height reference. Also available under **Quick actions → Recenter view**. With a runtime other than SteamVR, **L3 + R3** with both sticks centered sends the same request without opening the menu. [Runtime shortcuts](VR_CONTROLS.md#open-the-vr-menu-and-recenter) |
 | **Return to Game** | Closes the VR menu. |
 
 ## VR settings
@@ -34,7 +34,13 @@ In Story Mode with VR active, press **Menu** on the left controller. Release the
 | **Haptics** | Adjust vibration strength and soft engine rumble. |
 | **Image and performance** | Choose **Two Frames** for default CPU/GPU synchronization, **Overlap** as an alternative, or **Serial** for diagnosis. The headset sets the pace with the **Game FPS limiter** off. **Damage flash** and **Game screen filters** control the visual effects of hits and scripted events. In **Neural graphics (DLSS)** you can check status, change Neural Rendering and its strength, or compare A/B. Choose the Super Resolution level in the Suite for your next launch. [Graphics](GRAPHICS.md) |
 | **Menu appearance** | Choose the menu language. Under **Colours**, adjust red, green, blue, and transparency for each element. Reset an individual color or the entire appearance. |
-| **Change native camera** | Switch the GTA camera from the VR menu. |
+| **Camera** | **Cutscenes** chooses how cutscenes are shown. **Current VR Camera** keeps you inside the scene and your head moves the view. **Stereo Theatre**, the default for supported cutscenes, plays the cutscene in 3D on a large screen fixed in front of you, with its original framing and field of view, and you can look around the screen without moving the camera that films the scene. The choice is saved with the profile and can be changed during a cutscene. **Change native camera** switches the GTA camera from the VR menu. [Stereo Theatre](#watch-cutscenes-in-stereo-theatre) |
+
+### Watch cutscenes in Stereo Theatre
+
+**Stereo Theatre** starts by default on profiles without a saved choice. Open **Settings → Camera → Cutscenes** to change it. When a cutscene starts, the screen appears about three metres in front of the direction you are facing and stays there while you move your head. Each eye receives its own image, so the scene has depth behind the screen. Recenter to bring the screen in front of you again. The screen is also placed in front of you again after more than two seconds between theatre frames. A runtime session stop or restart, a change to the OpenXR tracking space, or a recenter can also place the screen again after a shorter interruption. Subtitles, the VR menu and the wrist panels stay where you placed them.
+
+Stereo Theatre applies to supported 3D cutscenes rendered by the GTA cutscene director, including a cutscene that starts with the character seated in a vehicle. Other scripted cameras, ordinary driving, pre-rendered video, the scope and the pause menu use their usual presentation. If the theatre cannot display a complete stereo pair, the cutscene resumes with the current VR camera. Select **Current VR Camera** to use that view for all cutscenes.
 
 ### Set the VR action bindings
 
@@ -42,7 +48,14 @@ Open **Settings → Controller buttons → VR action bindings**. Set the buttons
 
 ### Choose the free-hand weapon buttons
 
-Open **Settings → Weapons → Free hand buttons**. **Trigger for support** uses the trigger to support a weapon and grip to grab reload parts. **Grip for support** exchanges those two actions on the free hand. The trigger on the hand holding the weapon still fires it. **Support grip → Fixed / Sliding** controls the position of the supporting hand.
+Open **Settings → Weapons → Free hand buttons** and use left or right to select a mode.
+
+| Mode | Support the weapon | Handle reload parts and ammunition |
+| --- | --- | --- |
+| **Trigger for support** (default) | Free-hand trigger | Free-hand grip |
+| **Grip for support** | Free-hand grip | Free-hand trigger |
+
+The trigger on the hand holding the weapon still fires it. The weapon-hand latch and hammer controls, holsters and physical grabs keep their own inputs. **Support grip → Fixed / Sliding** changes how the supporting hand follows the weapon. [Weapon-specific reloads](VR_CONTROLS.md#reloading)
 
 ### Find HUD elements in VR
 
@@ -50,7 +63,7 @@ Open **VR Menu → Settings → HUD and interfaces** and enable **Wrist HUD**. U
 
 Mission objective text that GTA sends through its dialogue and print queue appears on the front panel. Help and activity prompts normally appear on the right wrist, alongside notifications. Native notifications may appear in front when the right wrist or the notification's live bounds are unavailable. Wanted stars normally sit below the minimap. If the map is absent, check the left wrist or the front HUD when its controller is untracked.
 
-In **HUD visibility**, check **Help / activities**, **Notifications**, **Wanted stars** and **Subtitles (panel)**. If a specific element is missing, note the mission, what text or icon you expected, and whether it showed in the desktop mirror.
+In **HUD visibility**, use the individual switches for **Money**, **Notifications**, **Phone messages**, **Help / activities**, **Subtitles (panel)**, **Location**, **Status**, **Other HUD**, **Wanted stars**, **Map** and **Big messages**. **Hide HUD while aiming** hides the wrist map, money and notices while the free hand supports the weapon. Use **VR button prompts** to switch between VR input icons and standard Xbox prompts. If a specific element is missing, note the mission, what text or icon you expected, and whether it showed in the desktop mirror.
 
 ### Position HUD panels with your hands
 

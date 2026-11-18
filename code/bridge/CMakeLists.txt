@@ -3,7 +3,7 @@ project(gtavxr_runtime_bridge LANGUAGES CXX)
 
 find_path(OPENXR_INCLUDE_DIR NAMES openxr/openxr.h REQUIRED)
 
-add_library(gtavxr_native_openxr SHARED bridge.cpp)
+add_library(gtavxr_native_openxr SHARED bridge.cpp bridge.def)
 target_compile_features(gtavxr_native_openxr PRIVATE cxx_std_20)
 target_compile_options(gtavxr_native_openxr PRIVATE /utf-8 /W4 /EHsc)
 target_compile_definitions(gtavxr_native_openxr PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX)

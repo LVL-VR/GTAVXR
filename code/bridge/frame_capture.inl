@@ -1,4 +1,5 @@
 // Actual Session capture/storage/cleanup; included by CPU service doubles too.
+    bool previousFlat=false; // the last captured eye 0 was a pause/scope panel frame (diagnostic)
     // 167-neural B2: with the chain the world eye arrives at the render size and leaves at the swapchain (output) size
     bool compatible(const D3D11_TEXTURE2D_DESC&d)const {return eyeChain.active()?shaped(d,eyeChain.render_width(),eyeChain.render_height()):shaped(d,width,height);}
     bool shaped(const D3D11_TEXTURE2D_DESC&d,uint32_t w,uint32_t h)const {
@@ -25,7 +26,15 @@
         const bool flat=panel||scopePanel.active;
         D3D11_TEXTURE2D_DESC s{};source->GetDesc(&s);demand(flat?shaped(s,s.Width,s.Height):compatible(s),"XR_SOURCE_SHAPE");
         ComPtr<ID3D11Device> source_device;source->GetDevice(&source_device);demand(source_device.Get()==device.Get(),"XR_SOURCE_DEVICE");
-        if(flat&&e==1){++copied;return;}
+        // The pair is already discarded: the guides the game handed over for this eye are not consumed.
+        if(theatre.discard)eyeChain.drop_pending();
+        if((flat&&e==1)||theatre.discard){++copied;return;}
+        // Diagnostic only: the first world pair after pause/scope frames reports each eye's path again.
+        if(e==0){if(!flat&&previousFlat)eyeChain.note_transition();previousFlat=flat;}
+        if(!flat&&e==0&&theatre.active!=theatrePreviousWorld){
+            eyeChain.invalidate_history();
+            theatrePreviousWorld=theatre.active;
+        }
         if(panel)ensure_panel(s.Width,s.Height);
         else if(scopePanel.active)ensure_scope_panel(s.Width,s.Height);
         Eye&eye=scopePanel.active?scopePanelEye:panel?panelEye:eyes[e];
@@ -38,18 +47,20 @@
             demand(index<eye.images.size(),"XR_IMAGE_INDEX");auto*target=eye.images[index].texture;demand(target,"XR_NULL_IMAGE");
             D3D11_TEXTURE2D_DESC d{};target->GetDesc(&d);demand(shaped(d,targetWidth,targetHeight)&&source!=target,"XR_TARGET_SHAPE_OR_ALIAS");
             ComPtr<ID3D11Device> target_device;target->GetDevice(&target_device);demand(target_device.Get()==device.Get(),"XR_TARGET_DEVICE");
-            perf147.gpu(context.Get(),flat?"flat_copy":"eye_copy",int(e),flat?0:-1,[&](){
-                if(!flat&&eyeChain.active())present_eye(e,gen,source,target);
+            perf147.gpu(context.Get(),flat?"flat_copy":theatre.active?"theatre_screen":"eye_copy",int(e),flat?0:-1,[&](){
+                // Theatre frame: the eye image shows the screen with this eye's cutscene picture on it.
+                if(!flat&&theatre.active)theatre_capture(e,gen,source,target);
+                else if(!flat&&eyeChain.active())present_eye(e,gen,source,target);
                 else swap_copy(target,source,0,0,nullptr,false,!flat&&steamVrInput);
             });
-            if(!flat&&steamVrInput&&worldProbePairs<6&&(worldProbePairs==0||frame%120==0)){
+            if(!flat&&!theatre.discard&&steamVrInput&&worldProbePairs<6&&(worldProbePairs==0||frame%120==0)){
                 worldProbe[e].Queue(device.Get(),context.Get(),source,target,true,frame,generation);
                 if(e==1)++worldProbePairs;
             }
             context->Flush();health("capture_after");
             // First pair + four spaced pairs only; never continuous GPU readback.
             // These frame IDs also have the existing pose telemetry (multiples of120).
-            if(!flat&&first_image&&(submitted==0||frame==120||frame==1200||frame==2400||frame==3600))first_image(source,e);
+            if(!flat&&!theatre.discard&&first_image&&(submitted==0||frame==120||frame==1200||frame==2400||frame==3600))first_image(source,e);
         } catch(...) {
             XrSwapchainImageReleaseInfo ri{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
             if(XR_SUCCEEDED(perf147.cpu("xrReleaseSwapchainImage",[&](){return api.ReleaseSwapchainImage(eye.swap,&ri);})))eye.acquired=eye.waited=false;

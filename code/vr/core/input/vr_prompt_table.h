@@ -9,7 +9,7 @@
 //                context L3+A, secondary L3+B, special ability double L3, cover L3 held; input/phone_controls.h R3 phone;
  
 #include "vr_prompts.h"
-#include "button_map.h"
+#include "action_bindings.h"
 namespace gx_vr_prompts
 {
 // short labels (<= 12 bytes: TextFormat's icon text buffer is 15 with "t_" and the terminator), UTF-8
@@ -80,7 +80,14 @@ inline void padTable(const int* map, bool phone, Packed* out)
 }
 // seated: vehicle / aircraft (the left-hand holster is the radio wheel there). motionOff (item 5 MOTION CONTROLS OFF): no
  
-inline Packed inputRow(unsigned input, bool seated, bool motionOff)
+inline Packed bindingGlyph(gx_action_bindings::Binding b)
+{
+    const unsigned glyph = sourceGlyph(b.button);
+    return b.gesture == gx_action_bindings::DOUBLE ? pack(glyph, glyph) : pack(glyph);
+}
+inline Packed inputRow(unsigned input, bool seated, bool motionOff,
+                       const gx_action_bindings::Config& actions = gx_action_bindings::Config(),
+                       bool aircraft = false, bool throttle = false)
 {
     if (motionOff && (input == I_SELECT_WEAPON || input == I_RADIO_WHEEL))
         return 0;
@@ -91,11 +98,18 @@ inline Packed inputRow(unsigned input, bool seated, bool motionOff)
     case I_CONTEXT_SECONDARY:
         return pack(G_L3, G_B);
     case I_SPECIAL_ABILITY:
-        return pack(G_L3, G_L3); // double L3 (300 ms)
+        return bindingGlyph(actions.get(gx_action_bindings::SPECIAL));
     case I_COVER:
-        return seated ? 0 : pack(G_L3); // L3 held, on foot
+        return seated ? 0 : bindingGlyph(actions.get(gx_action_bindings::COVER));
     case I_PHONE:
-        return pack(G_R3);
+        return bindingGlyph(actions.get(gx_action_bindings::PHONE));
+    case I_STEALTH:
+        return seated || actions.codes[gx_action_bindings::STEALTH] == 0 ? 0 :
+               bindingGlyph(actions.get(gx_action_bindings::STEALTH));
+    case I_AIR_FIRE:
+        return aircraft ? (throttle ? pack(T_RTRIGGER) : bindingGlyph(actions.get(gx_action_bindings::AIR_FIRE))) : 0;
+    case I_AIR_CYCLE:
+        return aircraft ? bindingGlyph(actions.get(gx_action_bindings::AIR_CYCLE)) : 0;
     case I_SELECT_WEAPON:
         return pack(T_HOLSTER);
     case I_RADIO_WHEEL:

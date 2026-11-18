@@ -4,7 +4,7 @@
         const long long perfStart147=Perf147::now();perf147.steps.reset(perfStart147);
         demand(cancel||(!fault&&id==frame&&gen==generation),"XR_FINISH_IDENTITY");
         for(auto&e:eyes)demand(!e.acquired,"XR_UNRELEASED_IMAGE");demand(!panelEye.acquired&&!scopePanelEye.acquired,"XR_UNRELEASED_IMAGE");
-        bool submit=!cancel&&visible;demand(!submit||copied==2,"XR_INCOMPLETE_PAIR");
+        bool submit=!cancel&&visible&&!theatre.discard;demand(!submit||copied==2,"XR_INCOMPLETE_PAIR");
         std::array<XrCompositionLayerProjectionView,2> views{{{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW},{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW}}};
         for(unsigned e=0;e<2;++e){views[e].pose=rendered[e].pose;views[e].fov=rendered[e].fov;views[e].subImage.swapchain=eyes[e].swap;views[e].subImage.imageRect.extent={int32_t(width),int32_t(height)};}
         XrCompositionLayerProjection layer{XR_TYPE_COMPOSITION_LAYER_PROJECTION};layer.space=space;layer.viewCount=2;layer.views=views.data();
@@ -91,9 +91,9 @@
             for(unsigned i=0;i<opticCount;++i)layers[count++]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&opticLayers[i]);
         if(haveSubtitles)layers[count++]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&subtitles);
         XrFrameEndInfo ei{XR_TYPE_FRAME_END_INFO};ei.displayTime=timing.predictedDisplayTime;ei.environmentBlendMode=XR_ENVIRONMENT_BLEND_MODE_OPAQUE;ei.layerCount=count;ei.layers=submit?layers:nullptr;
-        health("end_before");perf147.seal(context.Get());check(perf147.cpu("xrEndFrame",[&](){return api.EndFrame(session,&ei);}),"EndFrame");begun=false;scopeSources.invalidate();invalidate_scope_optics(!cancel);health("end_after");if(submit){if(scopePanel.active)++scope_frames;else if(panel)++menu_frames;else ++submitted;}
+        health("end_before");perf147.seal(context.Get());check(perf147.cpu("xrEndFrame",[&](){return api.EndFrame(session,&ei);}),"EndFrame");begun=false;scopeSources.invalidate();invalidate_scope_optics(!cancel);health("end_after");if(submit){if(scopePanel.active)++scope_frames;else if(panel)++menu_frames;else{++submitted;if(theatre.active)++theatre_frames;}}
         perf147.cpuRecord(frame,generation,cancel?"cancel":"finish",timing.predictedDisplayTime,timing.predictedDisplayPeriod,timing.shouldRender!=0,perfStart147,Perf147::now());
         LARGE_INTEGER qpc;QueryPerformanceCounter(&qpc);
-        if(!compact_logging||frame<=5||frame%120==0)log("FRAME id="+std::to_string(frame)+" generation="+std::to_string(generation)+" display_time="+std::to_string(timing.predictedDisplayTime)+" qpc="+std::to_string(qpc.QuadPart)+" copies="+std::to_string(copied)+" layers="+std::to_string(ei.layerCount)+" mode="+(scopePanel.active?"SCOPE":panel?"MENU":"WORLD")+" projection="+(world?"1":"0")+" subtitles="+(haveSubtitles?"1":"0")+
+        if(!compact_logging||frame<=5||frame%120==0)log("FRAME id="+std::to_string(frame)+" generation="+std::to_string(generation)+" display_time="+std::to_string(timing.predictedDisplayTime)+" qpc="+std::to_string(qpc.QuadPart)+" copies="+std::to_string(copied)+" layers="+std::to_string(ei.layerCount)+" mode="+(scopePanel.active?"SCOPE":panel?"MENU":theatre.active?"THEATRE":"WORLD")+" projection="+(world?"1":"0")+" subtitles="+(haveSubtitles?"1":"0")+
             " wanted="+(wanted.subImage.swapchain?"1":"0")+" map="+(mapVisible?"1":"0"));
     }

@@ -5,10 +5,8 @@ struct UiPixels {
     unsigned sourceWidth=0,sourceHeight=0;
 };
 std::array<UiPixels,64> uiPixels;
-Eye rightUiEye;struct UiPanel {Eye eye;unsigned width=0,height=0;};std::array<UiPanel,8> uiPanels;
+Eye rightUiEye;
 Eye elementUiEye;gx_ui_element::Plan rightPlan;uint64_t rightPlanFrame=0,elementUiFrame=0;
-UiPanel wantedUiPanel; // exclusive native wanted row; not a second general HUD
-UiPanel subtitleUiPanel;
 Eye subtitlePreviewEye;
 ComPtr<ID3D11Texture2D> subtitlePreviewPixels;
 bool subtitleLayerLogged=false;
@@ -22,18 +20,22 @@ void close_ui_eye(Eye&e){
         XrSwapchainImageReleaseInfo r{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};check(perf147.cpu("xrReleaseSwapchainImage",[&](){return api.ReleaseSwapchainImage(e.swap,&r);}),"UiCleanupRelease");e.acquired=e.waited=false;}
     if(e.swap){e.images.clear();check(api.DestroySwapchain(e.swap),"UiDestroy");e.swap={};}
 }
-void create_ui_eye(Eye&e,unsigned w,unsigned h){
+XrResult try_create_ui_eye(Eye&e,unsigned w,unsigned h){
     XrSwapchainCreateInfo c{XR_TYPE_SWAPCHAIN_CREATE_INFO};
     c.usageFlags=XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT|XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
     c.format=selected_format;c.sampleCount=c.faceCount=c.arraySize=c.mipCount=1;c.width=w;c.height=h;
-    check(perf147.cpu("xrCreateSwapchain",[&](){return api.CreateSwapchain(session,&c,&e.swap);}),"UiCreate");uint32_t n=0;
+    const XrResult created=perf147.cpu("xrCreateSwapchain",[&](){return api.CreateSwapchain(session,&c,&e.swap);});
+    if(XR_FAILED(created))return created;
+    uint32_t n=0;
     check(perf147.cpu("xrEnumerateSwapchainImages",[&](){return api.EnumerateSwapchainImages(e.swap,0,&n,nullptr);}),"UiImageCount");demand(n&&n<=16,"UI_IMAGES");
     e.images.assign(n,{XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR});
     check(api.EnumerateSwapchainImages(e.swap,n,&n,reinterpret_cast<XrSwapchainImageBaseHeader*>(e.images.data())),"UiImages");
     log("UI_SWAPCHAIN width="+std::to_string(w)+" height="+std::to_string(h)+" images="+std::to_string(n)+
         " color_bytes="+std::to_string(uint64_t(w)*h*4*n)); // excludes runtime allocation overhead
+    return created;
 }
-ID3D11Texture2D* acquire_ui_eye(Eye&e,unsigned w,unsigned h){
+void create_ui_eye(Eye&e,unsigned w,unsigned h){check(try_create_ui_eye(e,w,h),"UiCreate");}
+ID3D11Texture2D* acquire_ui_eye(Eye&e,unsigned w,unsigned h,uint32_t* index=nullptr){
     uint32_t n=0;XrSwapchainImageAcquireInfo a{XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};
     check(perf147.cpu("xrAcquireSwapchainImage",[&](){return api.AcquireSwapchainImage(e.swap,&a,&n);}),"UiAcquire");e.acquired=true;
     XrSwapchainImageWaitInfo wait{XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO};wait.timeout=1000000000;
@@ -42,12 +44,14 @@ ID3D11Texture2D* acquire_ui_eye(Eye&e,unsigned w,unsigned h){
     D3D11_TEXTURE2D_DESC d{};t->GetDesc(&d);ComPtr<ID3D11Device> owner;t->GetDevice(&owner);
     demand(owner.Get()==device.Get()&&d.Width==w&&d.Height==h&&d.ArraySize==1&&d.MipLevels==1&&d.SampleDesc.Count==1&&
         swap_format(d.Format),"UI_TARGET");
+    if(index)*index=n;
     return t;
 }
 void release_ui_eye(Eye&e){
     context->Flush();health("ui_copy");XrSwapchainImageReleaseInfo r{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
     check(perf147.cpu("xrReleaseSwapchainImage",[&](){return api.ReleaseSwapchainImage(e.swap,&r);}),"UiRelease");e.acquired=e.waited=false;
 }
+#include "ui_panel_storage.inl"
 bool capture_native_ui(const GxUiCapture&r,ID3D11Texture2D*source){
     demand(!fault&&begun&&visible&&!panel&&source&&r.size==sizeof(r)&&r.version==1&&!r.reserved&&
         r.frame==frame&&r.generation==generation&&r.count<=GX_UI_MAX_ITEMS,"UI_FRAME");
@@ -149,15 +153,9 @@ bool wanted_ui_layer(XrCompositionLayerQuad&q,const XrCompositionLayerQuad* map)
     if(!headFallback&&!place_panel(q,gx_panel::WANTED))return false;
     if(r.width>uiMaxWidth||r.height>uiMaxHeight){
         if(frame<=5||frame%120==0)log("UI_GAP reason=runtime_wanted_size");return false;}
-    if(wantedUiPanel.width!=r.width||wantedUiPanel.height!=r.height){
-        close_ui_eye(wantedUiPanel.eye);wantedUiPanel.width=r.width;wantedUiPanel.height=r.height;}
-    if(!wantedUiPanel.eye.swap)create_ui_eye(wantedUiPanel.eye,r.width,r.height);
-    auto*t=acquire_ui_eye(wantedUiPanel.eye,r.width,r.height);demand(t!=p->texture.Get(),"UI_WANTED_ALIAS");
-    perf147.gpu(context.Get(),"wanted_copy",-1,0,[&](){swap_copy(t,p->texture.Get());});release_ui_eye(wantedUiPanel.eye);
+    if(!publish_ui_panel(q.subImage,wantedUiPanel,*p,256,128,"wanted_copy"))return false;
     q.eyeVisibility=XR_EYE_VISIBILITY_BOTH;
     q.layerFlags=XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT|XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
-    q.subImage.swapchain=wantedUiPanel.eye.swap;
-    q.subImage.imageRect.extent={int(r.width),int(r.height)};
     return true;
 }
 void place_subtitle(XrCompositionLayerQuad& q){
@@ -235,11 +233,9 @@ bool native_ui_layer(XrCompositionLayerQuad&q,bool modal,unsigned which=0,unsign
         if(which==0&&large.size()>modalLimit&&(frame<=5||frame%120==0))log("UI_GAP reason=modal_capacity count="+std::to_string(large.size()));
         UiPixels*p=large[which];const auto&r=p->item;auto&modalEye=subtitlesOnly?subtitleUiPanel:uiPanels[which];
         if(r.width>uiMaxWidth||r.height>uiMaxHeight){if(frame<=5||frame%120==0)log("UI_GAP reason=runtime_panel_size id="+std::to_string(r.id));return false;}
-        if(modalEye.width!=r.width||modalEye.height!=r.height){close_ui_eye(modalEye.eye);modalEye.width=r.width;modalEye.height=r.height;}
-        if(!modalEye.eye.swap)create_ui_eye(modalEye.eye,r.width,r.height);
-        auto*t=acquire_ui_eye(modalEye.eye,r.width,r.height);demand(t!=p->texture.Get(),"UI_PANEL_ALIAS");
-        perf147.gpu(context.Get(),"modal_copy",-1,int(which),[&](){swap_copy(t,p->texture.Get());});release_ui_eye(modalEye.eye);panelUiFrame=frame;
-        q.space=head_space;q.subImage.swapchain=modalEye.eye.swap;q.subImage.imageRect.extent={int(r.width),int(r.height)};
+        if(!publish_ui_panel(q.subImage,modalEye,*p,subtitlesOnly?1024:512,subtitlesOnly?128:1024,"modal_copy"))return false;
+        panelUiFrame=frame;
+        q.space=head_space;
         q.pose.orientation.w=1;
         if(which>=nativeCount){
             const size_t index=which-nativeCount;
@@ -335,11 +331,11 @@ bool native_ui_element_layer(XrCompositionLayerQuad&q,unsigned kind){
     q.size={wide,wide*float(g.height)/g.width};return place_panel(q,gx_panel::elementPanel(kind));
 }
 void close_native_ui(){
-    close_ui_eye(subtitleUiPanel.eye);subtitleUiPanel.width=subtitleUiPanel.height=0;
+    close_ui_panel(subtitleUiPanel);
     close_ui_eye(subtitlePreviewEye);subtitlePreviewPixels.Reset();
     close_native_menu_layer();
-    close_ui_eye(wantedUiPanel.eye);wantedUiPanel.width=wantedUiPanel.height=0;
-    close_ui_eye(rightUiEye);close_ui_eye(elementUiEye);for(auto&p:uiPanels){close_ui_eye(p.eye);p.width=p.height=0;}for(auto&p:uiPixels)p=UiPixels();
+    close_ui_panel(wantedUiPanel);
+    close_ui_eye(rightUiEye);close_ui_eye(elementUiEye);for(auto& p:uiPanels)close_ui_panel(p);for(auto&p:uiPixels)p=UiPixels();
     rightUiFrame=panelUiFrame=0;rightUiWidth=rightUiHeight=0;
     rightPlanFrame=elementUiFrame=0;rightPlan=gx_ui_element::Plan();
 }

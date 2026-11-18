@@ -117,7 +117,12 @@ namespace GtavxrSuite {
                 result.Fallback="native";
             }else if(result.Choice.neural){
                 if(!Dlss.NeuralUsable(result.Folder)) result.Problem=result.Folder.nr==null?"DLSS_NEURAL_MODEL_MISSING":result.Folder.nr.error;
-                else if(Ofxr.NeuralEnabled(env.OfxrRoot,env.OfxrLayer)) result.Problem="OFXR_NEURAL_ALREADY_ACTIVE";
+                else{
+                    // OFXR's own NR on, or not determinable from one unambiguous profile: offer SR only.
+                    bool? ofxr=Ofxr.NeuralEnabled(env.OfxrRoot,env.OfxrLayer);
+                    if(ofxr==true) result.Problem="OFXR_NEURAL_ALREADY_ACTIVE";
+                    else if(ofxr==null) result.Problem="OFXR_NEURAL_UNKNOWN";
+                }
                 if(result.Problem!=null) result.Fallback=result.Choice.upscale=="off"?"native":"performance";
             }
             return result;

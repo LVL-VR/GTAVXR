@@ -12,7 +12,15 @@ namespace GtavxrSuite {
             t("DLSS detection by content: sample folders, search order, invalid files reported, hash never compared",()=>DlssSamples(Path.Combine(fresh,"dlss")));
             t("graphics presets: Native / Performance / Neural / Custom read and written in [Graphics], other lines kept",GraphicsPresets);
             t("OpenXR runtime selector: Automatic, a registered runtime or a manifest file; manifest and library_path checked",()=>RuntimeSelector(Path.Combine(fresh,"xr")));
-            t("OFXR: status only for a GTAVXR game, recommended profile changes only an existing key and keeps a copy",()=>OfxrProfile(Path.Combine(fresh,"ofxr")));
+            t("OFXR: status.json credited only to the running game's exact pid, process and fresh updated time; unmeasured is not 0; only the one exact profile is changed, one key, with undo",()=>{
+                try{
+                    OfxrProfile(Path.Combine(fresh,"ofxr"));
+                }catch(IOException error){
+                    // Windows can block or remove these synthetic files during antivirus scanning.
+                    if(error.HResult!=unchecked((int)0x800700E1)&&error.HResult!=unchecked((int)0x800700E2))throw;
+                    throw new NotExercisedException("Windows antivirus blocked or removed an OFXR fixture file: "+error.Message);
+                }
+            });
             t("another PC: a suite-mode version plays with no repository, its own loader, the session VR file, the DLSS folder and a changed runtime logged",()=>OtherPc(Path.Combine(fresh,"otherpc")));
         }
         static void Check(bool c,string what){if(!c)throw new Exception("expected: "+what);}
@@ -102,24 +110,170 @@ namespace GtavxrSuite {
             string profiles=Path.Combine(root,"Profiles");Directory.CreateDirectory(profiles);
             string layer=Path.Combine(root,"layer.json");File.WriteAllText(layer,"{}");
             var none=Ofxr.Read(root,null,null);Check(!none.layer&&none.status==null&&none.profile==null,"no layer = not installed");
-            var st=Ofxr.Read(root,layer,null);Check(st.layer&&st.status=="no-data"&&st.profile==null,"layer, no profile yet, no GTAVXR data");
-            Check(Ofxr.Recommend(st.profile)=="OFXR_NO_PROFILE","no profile = nothing changed");
+            var st=Ofxr.Read(root,layer,null);Check(st.layer&&st.status=="detected"&&st.profile==null&&!st.profile_ambiguous,"layer, no profile yet, no game");
+            Check(Ofxr.Recommend(root)=="OFXR_NO_PROFILE","no profile = nothing changed");
+            // The game the Suite started: pid, creation time (UTC ticks) and executable. alive() stands for the live
+            // same-process check (same pid AND same creation time).
+            var start=new DateTime(2026,11,17,10,0,0,DateTimeKind.Utc);
+            var now=start.AddMinutes(10);
+            var game=new ChildIdentity{pid=4242,creation_utc_ticks=start.Ticks,executable=@"C:\Games\GTAV\GTAVXR_SourceBaseline.exe",sha256=new string('A',64)};
+            bool running=true;Func<ChildIdentity,bool> alive=id=>running&&id.pid==4242&&id.creation_utc_ticks==start.Ticks;
             string js=Path.Combine(root,"status.json");
-            File.WriteAllText(js,"{\"session\":{\"process\":\"Cyberpunk2077.exe\"},\"generating\":true}");
-            Check(Ofxr.Read(root,layer,null).status=="no-data","status of another game is not shown");
-            File.WriteAllText(js,"{\"session\":{\"process\":\"GTAVXR_SourceBaseline.exe\"},\"armed\":true,\"generating\":true,\"app_fps\":45.5,\"output_fps\":90}");
-            var g=Ofxr.Read(root,layer,null);Check(g.status=="generating"&&Math.Abs(g.app_fps-45.5)<0.01&&Math.Abs(g.output_fps-90)<0.01,"status of the GTAVXR game shown");
-            File.SetLastWriteTimeUtc(js,DateTime.UtcNow.AddMinutes(-5));Check(Ofxr.Read(root,layer,null).status=="no-data","an old status file is ignored");
+            Func<string,OfxrState> read=json=>{if(json==null){if(File.Exists(js))File.Delete(js);}else File.WriteAllText(js,json);return Ofxr.Read(root,layer,null,game,alive,now);};
+            Func<DateTime,string> at=t=>t.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'",System.Globalization.CultureInfo.InvariantCulture);
+            Func<string,string,int,string,string> doc=(updated,process,pid,extra)=>"{\"schema\":1,\"armed\":true,\"paused\":false,\"updated\":\""+updated+"\",\"session\":{\"process\":\""+process+"\",\"pid\":"+pid+",\"runtime\":\"VDXR\"}"+extra+"}";
+            string fresh=at(now.AddSeconds(-1));
+            var ok=read(doc(fresh,"GTAVXR_SourceBaseline.exe",4242,",\"generating\":true,\"multiplier\":2,\"app_fps\":45.5,\"output_fps\":90"));
+            Check(ok.status=="generating"&&ok.reason==null&&ok.app_fps==45.5&&ok.output_fps==90&&ok.multiplier==2&&ok.runtime=="VDXR"&&ok.updated==fresh,
+                  "status.json of this exact game process is shown");
+            var idle=read(doc(fresh,"GTAVXR_SourceBaseline.exe",4242,",\"generating\":false"));
+            Check(idle.status=="active"&&idle.app_fps==null&&idle.output_fps==null&&idle.multiplier==null&&idle.latency_ms==null,
+                  "active without generation; absent measurements stay unmeasured, never 0");
+            Check(read(doc(fresh,"GTAVXR_SourceBaseline.exe",4242,",\"generating\":true,\"paused\":true,\"app_fps\":null,\"output_fps\":\"90\"")).status=="paused",
+                  "paused wins over generating");
+            var nulls=read(doc(fresh,"GTAVXR_SourceBaseline.exe",4242,",\"generating\":true,\"app_fps\":null,\"output_fps\":\"90\""));
+            Check(nulls.app_fps==null&&nulls.output_fps==null,"a null or text measurement is unmeasured");
+            // 1.0.5 review: a sample without a generation boolean is neither generation nor its confirmed absence.
+            foreach(string extra in new[]{",\"generating\":null","",",\"generating\":\"false\"",",\"generating\":0"}){
+                var u=read(doc(fresh,"GTAVXR_SourceBaseline.exe",4242,extra));
+                Check(u.status=="unconfirmed"&&u.generating==null&&u.reason==null,"generation not reported = unconfirmed: '"+extra+"' got "+u.status);
+            }
+            Check(idle.generating==false&&ok.generating==true,"the reported boolean is kept");
+            Check(PlayingPanel.OfxrLine(read(doc(fresh,"GTAVXR_SourceBaseline.exe",4242,",\"generating\":null,\"app_fps\":45")))
+                  ==L.F("run.ofxr",L.S("ofxr.unconfirmed"))+" · "+L.F("gfx.ofxr.measures","45",L.S("ofxr.unmeasured"),L.S("ofxr.unmeasured")),
+                  "the line during Play shows the unconfirmed state and its measures");
+            Check(PlayingPanel.OfxrLine(read(doc(fresh,"GTAVXR_SourceBaseline.exe",4242,",\"generating\":true")))
+                  .StartsWith(L.F("run.ofxr",L.S("ofxr.generating")),StringComparison.Ordinal),"the line during Play shows generation");
+            Check(PlayingPanel.OfxrLine(read(doc(fresh,"GTAVXR_SourceBaseline.exe",2147483001,",\"generating\":true")))
+                  ==L.F("run.ofxr",L.S("ofxr.insufficient"))+" · "+L.S("ofxr.reason.other_pid"),"the line during Play gives the reason");
+            Check(PlayingPanel.OfxrLine(Ofxr.Read(root,null,null,game,alive,now))==null&&PlayingPanel.OfxrLine(null)==null,"no OFXR line without OFXR");
+            // Every reason a file is not credited to this game.
+            var cases=new[]{
+                Tuple.Create((string)null,"no_status"),
+                Tuple.Create("{not json","status_unreadable"),
+                Tuple.Create(doc(fresh,"GTAVXR_SourceBaseline.exe",4242,"").Replace("\"schema\":1","\"schema\":2"),"schema"),
+                Tuple.Create(doc(fresh,"GTAVXR_SourceBaseline.exe",4242,"").Replace("\"schema\":1,",""),"schema"),
+                Tuple.Create(doc("2026-11-17 10:09:59","GTAVXR_SourceBaseline.exe",4242,""),"updated_missing"),
+                Tuple.Create(doc(at(now.AddSeconds(30)),"GTAVXR_SourceBaseline.exe",4242,""),"updated_future"),
+                Tuple.Create(doc(at(start.AddSeconds(-1)),"GTAVXR_SourceBaseline.exe",4242,""),"updated_before_game"),
+                Tuple.Create(doc("2020-01-01T00:00:00Z","GTAVXR_SourceBaseline.exe",4242,""),"updated_before_game"),
+                Tuple.Create(doc(at(now.AddSeconds(-6)),"GTAVXR_SourceBaseline.exe",4242,""),"updated_stale"),
+                Tuple.Create("{\"schema\":1,\"armed\":true,\"updated\":\""+fresh+"\",\"session\":null,\"generating\":null}","no_session"),
+                Tuple.Create(doc(fresh,"Cyberpunk2077.exe",4242,",\"generating\":true"),"other_process"),
+                Tuple.Create(doc(fresh,"GTAVXR_SourceBaseline_old.exe",4242,",\"generating\":true"),"other_process"),
+                Tuple.Create(doc(fresh,"GTAVXR_SourceBaseline.exe",2147483001,",\"generating\":true"),"other_pid"),
+            };
+            foreach(var c in cases){
+                var r=read(c.Item1);
+                Check(r.status=="insufficient"&&r.reason==c.Item2&&r.app_fps==null&&r.output_fps==null,"not credited: "+c.Item2+" got "+r.status+"/"+r.reason);
+            }
+            // Codex's counterexample: a freshly written file with a 2020 payload and an unmatched pid.
+            File.WriteAllText(js,"{\"schema\":1,\"generating\":true,\"updated\":\"2020-01-01T00:00:00Z\",\"session\":{\"process\":\"GTAVXR_SourceBaseline.exe\",\"pid\":2147483001}}");
+            var codex=Ofxr.Read(root,layer,null,game,alive,DateTime.UtcNow);
+            Check(codex.status=="insufficient"&&codex.app_fps==null,"a fresh file with an old payload and another pid is not generation");
+            // The same pid reused by another process after the game ended: the identity is no longer alive.
+            File.WriteAllText(js,doc(fresh,"GTAVXR_SourceBaseline.exe",4242,",\"generating\":true"));
+            running=false;
+            Check(Ofxr.Read(root,layer,null,game,alive,now).reason=="game_not_running","a reused pid after the game ended is not this game");
+            running=true;
+            Check(Ofxr.Read(root,layer,null,null,alive,now).status=="detected","no game running: the layer only");
+            // Repeated data: the same updated value stops counting once it is older than the freshness window.
+            Check(Ofxr.Read(root,layer,null,game,alive,now.AddSeconds(Ofxr.FreshSeconds+1)).reason=="updated_stale","a repeated status stops counting");
+            foreach(string k in Ofxr.States)Check(L.Has("ofxr."+k),"text for state "+k);
+            foreach(string k in Ofxr.Reasons)Check(L.Has("ofxr.reason."+k),"text for reason "+k);
+            foreach(string k in Ofxr.Errors)Check(L.Has("ofxr.err."+k),"text for error "+k);
+            foreach(string k in new[]{"OFXR_NEURAL_ALREADY_ACTIVE","OFXR_NEURAL_UNKNOWN"})Check(L.Has("code."+k),"words for "+k);
+            Check(L.Code("Mod X · MOD_MISSING")=="Mod X · "+L.S("code.MOD_MISSING")+" (MOD_MISSING)"&&L.Code("OFXR_NEURAL_UNKNOWN").EndsWith("(OFXR_NEURAL_UNKNOWN)")&&
+                  L.Code("Mod X · SOMETHING_ELSE")=="Mod X · SOMETHING_ELSE","known codes in words with the code kept, unknown ones unchanged");
+            File.Delete(js);
+
+            // Profiles: only the exact GTAVXR profile is used or changed.
             string prof=Path.Combine(profiles,"GTAVXR_SourceBaseline.ini");
             File.WriteAllText(prof,"[General]\r\nnr_enabled = True\r\nframegen = 1\r\n");
-            Check(Ofxr.Read(root,layer,null).profile==prof,"the GTAVXR profile OFXR created is found");
-            Check(Ofxr.Recommend(prof)==null,"recommended profile written");
+            Func<string> on=()=>layer;
+            Check(Ofxr.Read(root,layer,null).profile==prof&&Ofxr.NeuralEnabled(root,on)==true,"the GTAVXR profile OFXR created is found, NR on");
+            string other=Path.Combine(profiles,"Cyberpunk2077.exe.ini");File.WriteAllText(other,"nr_enabled=1\n");
+            string wildcard=Path.Combine(profiles,"GTAVXR_SourceBaseline_old.ini");File.WriteAllText(wildcard,"nr_enabled=1\n");
+            Check(Ofxr.Read(root,layer,null).profile==prof,"an exact profile is not confused with a wildcard match");
+            Check(Ofxr.Recommend(root)==null,"recommended profile written");
             Check(File.ReadAllText(prof)=="[General]\r\nnr_enabled = False\r\nframegen = 1\r\n","only nr_enabled changed, in its own form; got "+File.ReadAllText(prof).Replace("\r\n","|"));
-            Check(File.ReadAllText(prof+".gtavxr-before")=="[General]\r\nnr_enabled = True\r\nframegen = 1\r\n","the previous profile kept beside it");
+            Check(File.ReadAllText(prof+Ofxr.Backup)=="[General]\r\nnr_enabled = True\r\nframegen = 1\r\n","the previous profile kept beside it");
+            Check(File.ReadAllText(other)=="nr_enabled=1\n"&&File.ReadAllText(wildcard)=="nr_enabled=1\n","other profiles untouched");
+            Check(Ofxr.NeuralEnabled(root,on)==false&&Ofxr.CanUndo(root),"NR now off; undo available");
+            Check(Ofxr.Undo(root)==null&&File.ReadAllText(prof)=="[General]\r\nnr_enabled = True\r\nframegen = 1\r\n"&&!File.Exists(prof+Ofxr.Backup),"undo restores the profile exactly");
+            Check(Ofxr.Undo(root)=="OFXR_NO_BACKUP","nothing to undo twice");
+            OfxrUndo(root,prof);
+            // Two exact names, or only wildcard matches: ambiguous, nothing chosen or changed, NR indeterminate.
+            string second=Path.Combine(profiles,"GTAVXR_SourceBaseline.exe.ini");File.WriteAllText(second,"nr_enabled=1\n");
+            var amb=Ofxr.Read(root,layer,null);
+            Check(amb.profile==null&&amb.profile_ambiguous&&Ofxr.NeuralEnabled(root,on)==null,"two exact profiles are ambiguous");
+            Check(Ofxr.Recommend(root)=="OFXR_AMBIGUOUS_PROFILE"&&File.ReadAllText(second)=="nr_enabled=1\n"&&File.ReadAllText(prof).Contains("True"),"nothing changed in an ambiguous case");
+            File.Delete(second);File.Delete(prof);
+            amb=Ofxr.Read(root,layer,null);
+            Check(amb.profile==null&&amb.profile_ambiguous&&Ofxr.NeuralEnabled(root,on)==null&&Ofxr.Recommend(root)=="OFXR_AMBIGUOUS_PROFILE","only a wildcard match is ambiguous");
+            File.Delete(wildcard);
+            // No GTAVXR profile: OFXR copies ofxr-bridge.ini the first time; NR on there is indeterminate, off is off.
+            string shared=Path.Combine(root,"ofxr-bridge.ini");
+            File.WriteAllText(shared,"nr_enabled=on\n");Check(Ofxr.NeuralEnabled(root,on)==null,"shared starting config with NR on = indeterminate");
+            File.WriteAllText(shared,"framegen=1\n");Check(Ofxr.NeuralEnabled(root,on)==false,"no profile, shared config without NR = off");
+            File.Delete(shared);
+            Check(Ofxr.NeuralEnabled(root,()=>null)==false,"no layer = off");
             string noKey=Path.Combine(root,"nokey.ini");File.WriteAllText(noKey,"[General]\nframegen=1\n");
-            Check(Ofxr.Recommend(noKey)=="OFXR_NO_KEY"&&File.ReadAllText(noKey)=="[General]\nframegen=1\n"&&!File.Exists(noKey+".gtavxr-before"),"a profile without the key is not touched");
+            Check(Ofxr.RecommendFile(noKey)=="OFXR_NO_KEY"&&File.ReadAllText(noKey)=="[General]\nframegen=1\n"&&!File.Exists(noKey+Ofxr.Backup),"a profile without the key is not touched");
             string odd=Path.Combine(root,"odd.ini");File.WriteAllText(odd,"nr_enabled=maybe\n");
-            Check(Ofxr.Recommend(odd)=="OFXR_UNKNOWN_FORMAT"&&File.ReadAllText(odd)=="nr_enabled=maybe\n","an unknown value is not touched");
+            Check(Ofxr.RecommendFile(odd)=="OFXR_UNKNOWN_FORMAT"&&File.ReadAllText(odd)=="nr_enabled=maybe\n","an unknown value is not touched");
+            string twice=Path.Combine(root,"twice.ini");File.WriteAllText(twice,"nr_enabled=1\nnr_enabled=0\n");
+            Check(Ofxr.RecommendFile(twice)=="OFXR_UNKNOWN_FORMAT"&&File.ReadAllText(twice)=="nr_enabled=1\nnr_enabled=0\n","a repeated key is not touched");
+        }
+
+        // 1.0.5 review: Undo puts back nr_enabled only, atomically, and keeps both files on a conflict or an error.
+        static void OfxrUndo(string root,string prof){
+            Func<string> text=()=>File.ReadAllText(prof);string keep=prof+Ofxr.Backup;
+            Func<bool> noTemp=()=>!File.Exists(prof+".gtavxr-new");
+            // Codex's case: recommendation with multiplier=2, the player changes it to 3, Undo restores NR and keeps 3.
+            File.WriteAllText(prof,"nr_enabled=1\r\nmultiplier=2\r\n");
+            Check(Ofxr.Recommend(root)==null&&text()=="nr_enabled=0\r\nmultiplier=2\r\n","recommendation turns NR off");
+            File.WriteAllText(prof,"nr_enabled=0\r\nmultiplier=3\r\n");
+            Check(Ofxr.Undo(root)==null&&text()=="nr_enabled=1\r\nmultiplier=3\r\n"&&!File.Exists(keep)&&noTemp(),
+                  "undo restores nr_enabled and keeps the multiplier the player set; got "+text().Replace("\r\n","|"));
+            // nr_enabled changed outside the Suite after the recommendation: nothing written, both kept.
+            File.WriteAllText(prof,"nr_enabled = True\nmultiplier=2\n");
+            Check(Ofxr.Recommend(root)==null&&text()=="nr_enabled = False\nmultiplier=2\n","recommendation in its own form");
+            File.WriteAllText(prof,"nr_enabled = True\nmultiplier=4\n");
+            Check(Ofxr.Undo(root)=="OFXR_CHANGED"&&text()=="nr_enabled = True\nmultiplier=4\n"&&File.ReadAllText(keep)=="nr_enabled = True\nmultiplier=2\n"&&noTemp(),
+                  "a key changed after the recommendation is a conflict; both files kept");
+            File.WriteAllText(prof,"multiplier=4\n");
+            Check(Ofxr.Undo(root)=="OFXR_CHANGED"&&text()=="multiplier=4\n"&&File.Exists(keep),"a key removed after the recommendation is a conflict");
+            // The kept copy no longer names one known value (identity lost): nothing written.
+            File.WriteAllText(prof,"nr_enabled = False\n");File.WriteAllText(keep,"nr_enabled=maybe\n");
+            Check(Ofxr.Undo(root)=="OFXR_CONFLICT"&&text()=="nr_enabled = False\n"&&File.ReadAllText(keep)=="nr_enabled=maybe\n","an unreadable copy is a conflict");
+            File.WriteAllText(keep,"nr_enabled=1\nnr_enabled=1\n");
+            Check(Ofxr.Undo(root)=="OFXR_CONFLICT"&&File.Exists(keep),"a copy with a repeated key is a conflict");
+            File.WriteAllText(keep,"nr_enabled=0\n");
+            Check(Ofxr.Undo(root)=="OFXR_CONFLICT"&&File.Exists(keep),"a copy that was already off is not an undo source");
+            File.Delete(keep);
+            // The profile is in use (OFXR holds it): Recommend and Undo write nothing, report it and leave no temporary.
+            File.WriteAllText(prof,"nr_enabled=1\nmultiplier=2\n");
+            using(new FileStream(prof,FileMode.Open,FileAccess.Read,FileShare.None)){
+                Check(Ofxr.Recommend(root)=="OFXR_IN_USE"&&!File.Exists(keep)&&noTemp(),"recommendation on a profile locked for reading: nothing changed");
+            }
+            using(new FileStream(prof,FileMode.Open,FileAccess.Read,FileShare.Read)){
+                // Readable, so the copy is made, but the swap fails: the copy made by this call is removed again.
+                Check(Ofxr.Recommend(root)=="OFXR_IN_USE"&&!File.Exists(keep)&&noTemp(),"recommendation on a profile in use: nothing changed, no copy left");
+            }
+            Check(text()=="nr_enabled=1\nmultiplier=2\n","profile unchanged after the in-use refusal");
+            Check(Ofxr.Recommend(root)==null&&text()=="nr_enabled=0\nmultiplier=2\n"&&File.Exists(keep),"recommendation once the profile is free");
+            using(new FileStream(prof,FileMode.Open,FileAccess.Read,FileShare.Read)){
+                Check(Ofxr.Undo(root)=="OFXR_IN_USE"&&File.ReadAllText(keep)=="nr_enabled=1\nmultiplier=2\n"&&noTemp(),"undo on a profile in use: both kept, no temporary");
+            }
+            Check(text()=="nr_enabled=0\nmultiplier=2\n"&&Ofxr.Undo(root)==null&&text()=="nr_enabled=1\nmultiplier=2\n"&&!File.Exists(keep),"undo once the profile is free");
+            // Ambiguous profile: Undo touches neither file nor copy.
+            File.WriteAllText(prof,"nr_enabled=0\n");File.WriteAllText(keep,"nr_enabled=1\n");
+            string second=Path.Combine(Path.GetDirectoryName(prof),"GTAVXR_SourceBaseline.exe.ini");File.WriteAllText(second,"nr_enabled=0\n");
+            Check(Ofxr.Undo(root)=="OFXR_AMBIGUOUS_PROFILE"&&text()=="nr_enabled=0\n"&&File.ReadAllText(keep)=="nr_enabled=1\n"&&File.ReadAllText(second)=="nr_enabled=0\n",
+                  "ambiguous profile: undo changes nothing");
+            File.Delete(second);File.Delete(keep);
+            File.WriteAllText(prof,"[General]\r\nnr_enabled = True\r\nframegen = 1\r\n");
         }
 
         // ---------- another PC ----------

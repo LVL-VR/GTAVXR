@@ -55,6 +55,27 @@ namespace GtavxrSuite {
                 }
                 return SpinWait.SpinUntil(()=>!Directory.Exists(stage),12000);
             });
+            t("session minidumps retain two prior captures and preserve session records",()=>{
+                string sessions=SafeFs.Under(fresh,"session-dump-retention");
+                string[] ids={"20261117T000000-old","20261117T010000-newer","20261117T020000-last","20261117T030000-current"};
+                foreach(string id in ids){
+                    string native=SafeFs.Under(sessions,id+"/native");
+                    Directory.CreateDirectory(native);
+                    if(id==ids[3])continue;
+                    Json.New(SafeFs.Under(sessions,id+"/session.json"),new SessionRecord{
+                        schema="gtavxr-suite2-session-v1",id=id,phase="CLOSED"});
+                    File.WriteAllText(SafeFs.Under(native,SessionDumps.Name),id);
+                }
+                string current=SafeFs.Under(sessions,ids[3]+"/native");
+                if(!SessionDumps.Prepare(sessions,ids[3],current)||
+                   File.Exists(SafeFs.Under(sessions,ids[0]+"/native/"+SessionDumps.Name))||
+                   !File.Exists(SafeFs.Under(sessions,ids[0]+"/session.json"))||
+                   !File.Exists(SafeFs.Under(sessions,ids[1]+"/native/"+SessionDumps.Name))||
+                   !File.Exists(SafeFs.Under(sessions,ids[2]+"/native/"+SessionDumps.Name)))return false;
+                if(SessionDumps.Prepare(sessions,ids[3],SafeFs.Under(sessions,ids[1]+"/native")))return false;
+                File.WriteAllText(SafeFs.Under(current,SessionDumps.Name),"existing");
+                return !SessionDumps.Prepare(sessions,ids[3],current);
+            });
             return new{status=failed==0?"PASS":"FAIL",failed,rows,real_start_menu_touched=false};
         }
     }

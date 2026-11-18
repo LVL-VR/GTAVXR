@@ -77,7 +77,8 @@ namespace GtavxrSuite {
             catch(Exception){return null;}
         }
         public OfxrState OfxrNow(){
-            try{return Ofxr.Read(Env.OfxrRoot,Env.OfxrLayer!=null?Env.OfxrLayer():null,Settings==null?null:Settings.ofxr_tray);}catch(Exception){return new OfxrState();}
+            try{return Ofxr.Read(Env.OfxrRoot,Env.OfxrLayer!=null?Env.OfxrLayer():null,Settings==null?null:Settings.ofxr_tray,Session.RunningGame());}
+            catch(Exception){return new OfxrState();}
         }
         public bool Dev{get{return Settings!=null&&Settings.dev_mode;}}
         public VersionManifest Version(string id){return Versions.FirstOrDefault(v=>v.id==id);}

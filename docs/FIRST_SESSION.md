@@ -18,7 +18,7 @@ If another part of the prologue does not advance in VR, finish that section or t
 
 Once Story Mode unlocks multiple protagonists, open **VR Menu → Story Character** to choose one. [VR menu and Trainer](VR_MENU.md)
 
-If a cutscene makes you feel motion sick, skip it when the game offers that option. If a transition leaves the camera out of place, select **VR Menu → Recenter** when you regain control. [Story Mode known issues](KNOWN_ISSUES.md#story-mode-camera-and-cutscenes)
+Supported cutscenes use **Stereo Theatre** by default. To change the view, open **VR Menu → Settings → Camera → Cutscenes**. If a cutscene still makes you feel motion sick, skip it when the game offers that option. If a transition leaves the camera out of place, select **VR Menu → Recenter** when you regain control. [Story Mode known issues](KNOWN_ISSUES.md#story-mode-camera-and-cutscenes)
 
 ## Close the game and play again
 

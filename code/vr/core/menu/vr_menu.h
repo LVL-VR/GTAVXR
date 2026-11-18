@@ -15,7 +15,8 @@
 #include "../weapons/reload_family.h" // build149 D/F: recoil mode + reload switch per weapon family
 #include "../vehicles/vehicle_camera.h"
 #include "../body/body_view_situation.h" // build167 item 5
-#include "../input/button_map.h"  
+#include "../input/action_bindings.h"
+#include "../xr/theatre_policy.h"
 namespace gx_menu
 {
 enum Command
@@ -145,7 +146,9 @@ enum Page
     PANELS,
     WRIST_BUTTONS,
     BODY_VIEW,
-    GRAPHICS_NEURAL
+    GRAPHICS_NEURAL,
+    ACTION_BINDINGS_PAGE,
+    CAMERA_SETTINGS_PAGE // Settings > Camera: native camera switch and how cutscenes are shown
 }; // build164: the unreachable retired pages (145 +/- pages, 163 Interfaces/Performance) are gone
 enum
 {
@@ -215,11 +218,14 @@ struct Settings
     // build165 item 5: left stick throttle / brake while aiming (driver, right grip), switch ON (OFF = 164); item 12: walk
     // direction 0 = HMD (default, today), 1 = where the left controller points
     int moveDirection;
+    // Settings > Camera > Cutscenes: 0 = current VR camera, 1 = stereo theatre (default)
+    int cutsceneView;
     // build165 item 10: parachute mode 0 NORMAL (today) / 1 IMMERSIVE, camera follows the canopy, dive view, auto-open (OFF = today)
     int parachuteMode;
     bool parachuteFollow, parachuteDive, parachuteAuto;
      
     int buttonMap[gx_button_map::CONTEXT_COUNT][gx_button_map::SOURCE_COUNT];
+    gx_action_bindings::Config actionBindings;
     // build165 item 17: Imagen screen-effect switches (ON = today) and Fisica > Avanzado thresholds (30 cm / 100 % = today)
     bool screenDamage, screenFilters;
     int legsCrouchCm, strikeSpeedPercent;
@@ -227,7 +233,7 @@ struct Settings
     int modsPedPercent, modsTrafficPercent;
     bool modsMpMaps;
      
-    bool leftRealistic, oneHandSupport;
+    bool leftRealistic, oneHandSupport, swapWeaponHandButtons;
     bool
         vehiclePanels; // build167 item 2: the vehicle layouts (ON by default; OFF = the panels of today in vehicles)
     bool wristButtons;
@@ -271,17 +277,20 @@ struct Settings
         invertFlightPitch = false;
         stickDrive = true;
         moveDirection = 0;
+        cutsceneView = gx_theatre::DefaultView;
         parachuteMode = 0;
         parachuteFollow = parachuteDive = parachuteAuto = false;
         for (unsigned c = 0; c < gx_button_map::CONTEXT_COUNT; ++c)
             for (unsigned b = 0; b < gx_button_map::SOURCE_COUNT; ++b)
                 buttonMap[c][b] = gx_button_map::SAME;
+        actionBindings.reset();
         screenDamage = screenFilters = true;
         legsCrouchCm = 30;
         strikeSpeedPercent = 100;
         modsPedPercent = modsTrafficPercent = 100;
         modsMpMaps = false;
         leftRealistic = oneHandSupport = true;
+        swapWeaponHandButtons = false;
         vehiclePanels = true;
         defaultBodyView();
         headFade = true;
@@ -302,12 +311,15 @@ struct Settings
                flightSensitivity[1] == o.flightSensitivity[1] && controlFrame == o.controlFrame &&
                levelHarden == o.levelHarden && invertFlightPitch == o.invertFlightPitch &&
                stickDrive == o.stickDrive && moveDirection == o.moveDirection &&
+               cutsceneView == o.cutsceneView &&
                parachuteMode == o.parachuteMode && parachuteFollow == o.parachuteFollow &&
                parachuteDive == o.parachuteDive && parachuteAuto == o.parachuteAuto && sameButtons(o) &&
+               actionBindings.same(o.actionBindings) &&
                screenDamage == o.screenDamage && screenFilters == o.screenFilters &&
                legsCrouchCm == o.legsCrouchCm && strikeSpeedPercent == o.strikeSpeedPercent &&
                modsPedPercent == o.modsPedPercent && modsTrafficPercent == o.modsTrafficPercent &&
                modsMpMaps == o.modsMpMaps && leftRealistic == o.leftRealistic &&
+               swapWeaponHandButtons == o.swapWeaponHandButtons &&
                oneHandSupport == o.oneHandSupport && vehiclePanels == o.vehiclePanels &&
                wristButtons == o.wristButtons && sameSlots(wristSlots, o.wristSlots) &&
                vrPrompts == o.vrPrompts && sameBodyViewSettings(bodyView, o.bodyView) &&
@@ -443,6 +455,13 @@ enum MovementRow
     MV_BACK,
     MV_COUNT
 }; // build165: turn mode, turn rate, walk direction, item 10
+enum CameraRow
+{
+    CM_CUTSCENES,
+    CM_NATIVE,
+    CM_BACK,
+    CM_COUNT
+}; // Settings > Camera
 enum ParachuteRow
 {
     PA_MODE,
@@ -464,6 +483,7 @@ enum ButtonMapRow
     MAP_CAPTURE,
     MAP_COPY,
     MAP_RESET,
+    MAP_ACTIONS,
     MAP_BACK,
     MAP_COUNT
 }; // build165 item 13
@@ -554,6 +574,7 @@ enum WeaponsRow
     W_GUN_STRIKE,
     W_WORLD,
     W_SCOPE,
+    W_SWAP_HAND_BUTTONS,
     W_BACK,
     W_COUNT
 };
@@ -881,8 +902,12 @@ class Menu
             return FL_COUNT; // build165
         if (page_ == MOVEMENT)
             return MV_COUNT; // build165 item 12
+        if (page_ == CAMERA_SETTINGS_PAGE)
+            return CM_COUNT;
         if (page_ == PARACHUTE_SETTINGS_PAGE)
             return PA_COUNT; // build165 item 10
+        if (page_ == ACTION_BINDINGS_PAGE)
+            return gx_action_bindings::COUNT + 2;
         if (page_ == BUTTON_SETTINGS_PAGE)
             return MAP_COUNT; // build165 item 13
         if (page_ == QUICK_ACTIONS_PAGE)
@@ -1021,6 +1046,11 @@ class Menu
             return false;
         switch (page_)
         {
+        case CAMERA_SETTINGS_PAGE:
+            if (selected_ != CM_CUTSCENES)
+                return false;
+            settings.cutsceneView = settings.cutsceneView ? 0 : 1;
+            return true;
         case MOVEMENT: // build165 item 12: the turning rows (moved from Settings) + the walk direction
             if (selected_ == MV_TURN)
             {
@@ -1046,6 +1076,11 @@ class Menu
                 return true;
             }
             return false;
+        case ACTION_BINDINGS_PAGE:
+            if (selected_ >= gx_action_bindings::COUNT)
+                return false;
+            settings.actionBindings.cycle(selected_, d);
+            return true;
         case BUTTON_SETTINGS_PAGE:  
             if (selected_ == MAP_CONTEXT)
             {
@@ -1247,6 +1282,11 @@ class Menu
                 settings.oneHandSupport = !settings.oneHandSupport;
                 return true;
             } // build167 item 9
+            if (selected_ == W_SWAP_HAND_BUTTONS)
+            {
+                settings.swapWeaponHandButtons = !settings.swapWeaponHandButtons;
+                return true;
+            }
             if (selected_ == W_HELP_GLOW)
             {
                 settings.helpGlow = !settings.helpGlow;
@@ -1660,6 +1700,8 @@ class Menu
                 go(HUD); // build167 item 3
             else if (page_ == BODY_VIEW)
                 go(SETTINGS); // build167 item 5
+            else if (page_ == ACTION_BINDINGS_PAGE)
+                go(BUTTON_SETTINGS_PAGE);
             else if (page_ == BUTTON_SETTINGS_PAGE)
                 go(SETTINGS); // build165 item 13
             else if (page_ == PARACHUTE_SETTINGS_PAGE)
@@ -1667,7 +1709,8 @@ class Menu
             else if (page_ == VEHICLE_CAMERA_SETTINGS_PAGE || page_ == FLIGHT)
                 go(VEHICLE_SETTINGS); // build165
             else if (page_ == CALIBRATION || page_ == HAPTICS || page_ == HUD || page_ == PHYSICS ||
-                     page_ == VEHICLE_SETTINGS || page_ == IMAGE || page_ == MOVEMENT)
+                     page_ == VEHICLE_SETTINGS || page_ == IMAGE || page_ == MOVEMENT ||
+                     page_ == CAMERA_SETTINGS_PAGE)
                 go(SETTINGS);
             else if (page_ == SETTINGS)
                 go(OPTIONS);
@@ -1816,12 +1859,21 @@ class Menu
                 go(MENU_APPEARANCE);
                 break;
             case S_CAMERA:
-                out.command = VIEW_GAME;
+                go(CAMERA_SETTINGS_PAGE);
                 break;
             case S_BACK:
                 go(OPTIONS);
                 break;
             }
+        }
+        else if (page_ == CAMERA_SETTINGS_PAGE)
+        {
+            if (selected_ == CM_CUTSCENES)
+                settings.cutsceneView = settings.cutsceneView ? 0 : 1;
+            else if (selected_ == CM_NATIVE)
+                out.command = VIEW_GAME; // the action this row replaced in Settings
+            else
+                go(SETTINGS);
         }
         else if (page_ == MOVEMENT)
         { // build165 item 12: same turning behaviour as the old Settings rows
@@ -1843,6 +1895,15 @@ class Menu
             else
                 go(SETTINGS);
         }
+        else if (page_ == ACTION_BINDINGS_PAGE)
+        {
+            if (selected_ < gx_action_bindings::COUNT)
+                settings.actionBindings.cycle(selected_, 1);
+            else if (selected_ == gx_action_bindings::COUNT)
+                settings.actionBindings.reset();
+            else
+                go(BUTTON_SETTINGS_PAGE);
+        }
         else if (page_ == BUTTON_SETTINGS_PAGE)
         { // build165 item 13
             if (selected_ == MAP_CONTEXT)
@@ -1861,6 +1922,8 @@ class Menu
                         for (unsigned k = 0; k < gx_button_map::SOURCE_COUNT; ++k)
                             settings.buttonMap[c][k] = settings.buttonMap[buttonContext_][k];
             }
+            else if (selected_ == MAP_ACTIONS)
+                go(ACTION_BINDINGS_PAGE);
             else if (selected_ == MAP_RESET)
             {
                 for (unsigned k = 0; k < gx_button_map::SOURCE_COUNT; ++k)
@@ -1991,6 +2054,8 @@ class Menu
                 settings.oneHandSupport = !settings.oneHandSupport;
             else if (selected_ == W_HELP_GLOW)
                 settings.helpGlow = !settings.helpGlow;
+            else if (selected_ == W_SWAP_HAND_BUTTONS)
+                settings.swapWeaponHandButtons = !settings.swapWeaponHandButtons;
             else if (selected_ == W_RELOAD)
                 go(RELOAD_SETTINGS_PAGE);
             else if (selected_ == W_SCOPE)

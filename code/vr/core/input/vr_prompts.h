@@ -66,6 +66,9 @@ enum Input
     I_PHONE,
     I_SELECT_WEAPON,
     I_RADIO_WHEEL,
+    I_STEALTH,
+    I_AIR_FIRE,
+    I_AIR_CYCLE,
     INPUT_COUNT
 };
  

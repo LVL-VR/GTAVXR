@@ -433,16 +433,29 @@ namespace GtavxrSuite {
             var oh=U.Text(L.S("gfx.ofxr"),15,Theme.Text,true,FontWeights.SemiBold);oh.Margin=new Thickness(0,12,0,2);col.Children.Add(oh);
             if(!of.layer)col.Children.Add(U.Text(L.S("gfx.ofxr.none"),12,Theme.Mist));
             else{
-                col.Children.Add(U.Text(L.F("gfx.ofxr.status",L.S("ofxr."+(of.status??"no-data"))),12,Theme.Text));
+                col.Children.Add(U.Text(L.F("gfx.ofxr.status",L.S("ofxr."+(of.status??"detected"))),12,Theme.Text));
+                if(of.status=="insufficient"&&of.reason!=null){
+                    var why=U.Text(L.S("ofxr.reason."+of.reason),12,Theme.Mist);why.TextWrapping=TextWrapping.Wrap;col.Children.Add(why);
+                }
+                if(of.status=="active"||of.status=="unconfirmed"||of.status=="paused"||of.status=="generating"){
+                    Func<double?,string> n=x=>x==null?L.S("ofxr.unmeasured"):x.Value.ToString("0.#",System.Globalization.CultureInfo.CurrentCulture);
+                    var m=U.Text(L.F("gfx.ofxr.measures",n(of.app_fps),n(of.output_fps),n(of.multiplier)),12,Theme.Mist);
+                    m.TextWrapping=TextWrapping.Wrap;col.Children.Add(m);
+                }
                 var acts=new WrapPanel{Margin=new Thickness(0,6,0,0)};
-                string tray=of.tray,profile=of.profile;
+                string tray=of.tray,profile=of.profile,root=s.Env.OfxrRoot;
                 var open=U.Btn(L.S("gfx.ofxr.open"),"Btn",()=>{try{System.Diagnostics.Process.Start(tray);}catch(Exception){shell.Info(L.S("gfx.ofxr"),L.S("gfx.ofxr.notray"));}});
                 open.IsEnabled=tray!=null;open.Margin=new Thickness(0,0,8,8);acts.Children.Add(open);
-                var rec=U.Btn(L.S("gfx.ofxr.recommend"),"Ghost",()=>{string err=Ofxr.Recommend(profile);if(err==null)shell.Toast(L.S("gfx.ofxr.done"));else shell.Info(L.S("gfx.ofxr"),L.S("ofxr.err."+err));});
+                var rec=U.Btn(L.S("gfx.ofxr.recommend"),"Ghost",()=>{string err=Ofxr.Recommend(root);if(err==null)shell.Toast(L.S("gfx.ofxr.done"));else shell.Info(L.S("gfx.ofxr"),L.S("ofxr.err."+err));});
                 rec.IsEnabled=profile!=null&&!s.Busy;rec.Margin=new Thickness(0,0,8,8);acts.Children.Add(rec);
+                if(Ofxr.CanUndo(root)){
+                    var undo=U.Btn(L.S("gfx.ofxr.undo"),"Ghost",()=>{string err=Ofxr.Undo(root);if(err==null)shell.Toast(L.S("gfx.ofxr.undone"));else shell.Info(L.S("gfx.ofxr"),L.S("ofxr.err."+err));});
+                    undo.IsEnabled=!s.Busy;undo.Margin=new Thickness(0,0,8,8);acts.Children.Add(undo);
+                }
                 col.Children.Add(acts);
                 if(tray==null){var th=U.Text(L.S("gfx.ofxr.notray"),12,Theme.Mist);th.TextWrapping=TextWrapping.Wrap;col.Children.Add(th);}
-                if(profile==null){var pf=U.Text(L.S("gfx.ofxr.noprofile"),12,Theme.Mist);pf.TextWrapping=TextWrapping.Wrap;col.Children.Add(pf);}
+                if(of.profile_ambiguous){var pa=U.Text(L.S("gfx.ofxr.ambiguous"),12,Theme.Hazard);pa.TextWrapping=TextWrapping.Wrap;col.Children.Add(pa);}
+                else if(profile==null){var pf=U.Text(L.S("gfx.ofxr.noprofile"),12,Theme.Mist);pf.TextWrapping=TextWrapping.Wrap;col.Children.Add(pf);}
                 var ssw=U.Row(6,U.Dot(Theme.Hazard,6),U.Text(L.S("gfx.ofxr.ssw"),12,Theme.Hazard));((TextBlock)ssw.Children[1]).TextWrapping=TextWrapping.Wrap;ssw.Margin=new Thickness(0,2,0,0);col.Children.Add(ssw);
             }
             return new Border{Child=col,Background=Theme.B(Theme.Terminal),BorderBrush=Theme.B(Theme.Line),BorderThickness=new Thickness(1.5),CornerRadius=new CornerRadius(9),Padding=new Thickness(14,12,14,12),Margin=new Thickness(0,4,0,10)};
