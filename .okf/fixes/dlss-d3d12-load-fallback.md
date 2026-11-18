@@ -68,3 +68,21 @@ EYE_CHAIN state=chain render=2320x2368 output=4008x4096 sr=1 nr=1
   hash bookkeeping) or an upstream fix.
 * The burst of LiveKernelEvent 141/193 and BlueScreen 139 reports at a single second (14:02:55, 14:12:48) is WER
   flushing its old queue. The System log shows no new display-driver events, and the last boot was 2026-11-16. See [bridge deploy](/operations/bridge-build-deploy.md).
+
+# OFXR follow-up: repair at DLL load (2026-11-18)
+
+* **Symptom with OFXR enabled:** everything blurry, and Cheeky inactive.
+* **Evidence:**
+  * stderr: `OpenXR-Loader: Failed loading layer information` / `xrCreateInstance failed`;
+  * `EYE_SIZE_FALLBACK status=3 ... recommended=0x0 ui=1920x1080` and `EYE_VIEWS ... chosen=1920x1080`;
+  * no `EYE_CHAIN` line, and Cheeky `mapping=0 out=0x0`.
+* **Cause:** the host's eye-size query (a bridge export) runs **before** `create()`. OFXR's layer DLL imports
+  `d3d12.dll`, which crashed on the still-unrepaired export directory, so the loader rejected the layer for that
+  first instance. A standalone probe with the same layers, extensions and app name succeeded outside the game.
+* **Fix:** the repair moved to a static initializer at bridge DLL load (kernel32 only). It is logged at the first
+  create as `EXE_EXPORT_DIR_REPAIRED ... at=load`.
+* **Verified (session 20261118T083737, OFXR v773 enabled):** `EYE_SIZE_QUERY_END status=0`, `reused=1`,
+  `chosen=3400x3464`, `EYE_CHAIN state=chain`, Cheeky `mapping=1`. OFXR flight log: 3708 `synthesis_pair`,
+  1876 `composition_publish`.
+* The earlier OFXR session that "kicked out of VR" ended in an orderly way: game exit code 0, no WER entry, normal
+  STOPPING→IDLE→EXITING. Its cause is not established.
