@@ -161,8 +161,17 @@ namespace GtavxrSuite {
             return best;
         }
         public bool GameRunning(){
-            foreach(string n in env.GameProcessNames){var ps=Process.GetProcessesByName(n);bool any=ps.Any(p=>!p.HasExited);foreach(var p in ps)p.Dispose();if(any)return true;}
+            foreach(string n in env.GameProcessNames){var ps=Process.GetProcessesByName(n);bool any=ps.Any(Alive);foreach(var p in ps)p.Dispose();if(any)return true;}
             return false;
+        }
+        // An elevated game cannot be opened from a normal Suite (HasExited: Access is denied). The system snapshot
+        // still lists its threads: an exited process kept listed by a lingering reference has none, a live one does.
+        // Anything not provably exited counts as running.
+        static bool Alive(Process p){
+            try{return !p.HasExited;}
+            catch(System.ComponentModel.Win32Exception){
+                try{return p.Threads.Count>0;}catch(Exception){return true;}
+            }
         }
 
         // Full play. Blocks until the game has closed and everything is back in place.
