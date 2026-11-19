@@ -198,7 +198,7 @@ struct Forwarder {
 };
 inline bool NgxGood(int r) { return NgxOk(r) && r != GX_FWD_EXCEPTION && r != GX_FWD_NO_EXPORT && r != GX_FWD_NOT_LOADED && r != GX_FWD_BAD_ARGUMENT; }
 
-struct CaptureConstants { float relFromClip[16]; float prevClipFromRel[16]; float size[2]; float jitter[2]; uint32_t reset, pad[3]; };
+struct CaptureConstants { float relFromClip[16]; float prevClipFromRel[16]; float size[2]; float jitter[2]; uint32_t reset; float nearZeroMetres; uint32_t nearMode, pad; };
 
 class Chain {
 public:
@@ -216,6 +216,7 @@ public:
     // 0 = NR/SR ready, 1 = runs as the D3D11 bilinear blit (reason logged); throws only when even the blit cannot exist
     int configure(ID3D11Device* d, ID3D11DeviceContext* c, const GxEyeChainConfig& k, const std::wstring& dataDir, const std::wstring& bridgeDir)
     {
+        bridgeDir_ = bridgeDir; nearReadCountdown_ = 0;
         Need(!configured_ && d && c && k.render_width && k.render_height && k.output_width && k.output_height &&
              k.render_width <= k.output_width && k.render_height <= k.output_height && k.upscale < gx_eye_chain::UPSCALE_COUNT && k.neural_intensity <= 100,
              "chain_config");
@@ -321,6 +322,8 @@ private:
     Forwarder sr_, nr_; Eye eyes_[2]; Blitter blit_;
     GxEyeGuides pending_{}; ComPtr<ID3D11Resource> pendingDepth_; bool pendingSet_ = false, pendingHas_ = false;
     bool configured_ = false, srOn_ = false, nrReady_ = false, nrWanted_ = false, nrTried_ = false;
+    unsigned histTotal_ = 0, histReset_ = 0, histGame_ = 0, histStale_ = 0;
+    int nearReadCountdown_ = 0; float nearZeroMetres_ = 0; unsigned nearMode_ = 0; std::wstring bridgeDir_;
     uint32_t rw_ = 0, rh_ = 0, ow_ = 0, oh_ = 0, upscale_ = 0, intensity_ = 50, compare_ = 0, state_ = gx_eye_chain::NATIVE, faultStage_ = 0;
     long faultCode_ = 0; std::string reason_, nrNote_; std::wstring dataDir_, dlssDir_, forwarderDir_; double ms_[4] = {};
     gx_eye_chain_log::PairLog pairLog_;   // diagnostic only
@@ -481,9 +484,29 @@ private:
         // history: fresh guides of this eye and pair, and no reset
         const bool fresh = pendingHas_ && pending_.eye == eyeIndex && pending_.generation == generation && pending_.render_width == rw_ && pending_.render_height == rh_;
         const bool reset = !fresh || pending_.reset || !e.history;
+        // History diagnostics: how often DLSS starts without history, and why (game reset = cut/jump/generation gap
+        // decided by the game side; stale = guides not for this eye/pair/size). One line per 900 evaluations.
+        ++histTotal_; if(reset) { ++histReset_; if(!fresh) ++histStale_; else if(pending_.reset) ++histGame_; }
+        if(histTotal_ >= 900) {
+            say("EYE_CHAIN history evaluations=" + std::to_string(histTotal_) + " reset=" + std::to_string(histReset_) +
+                " game_reset=" + std::to_string(histGame_) + " stale=" + std::to_string(histStale_));
+            histTotal_ = histReset_ = histGame_ = histStale_ = 0;
+        }
         CaptureConstants k{};
         if(fresh) { memcpy(k.relFromClip, pending_.rel_from_clip, 64); memcpy(k.prevClipFromRel, pending_.prev_clip_from_rel, 64); k.jitter[0] = pending_.jitter_px[0]; k.jitter[1] = pending_.jitter_px[1]; }
         k.size[0] = (float)rw_; k.size[1] = (float)rh_; k.reset = reset ? 1u : 0u;
+        // Experimental: pixels nearer than N metres keep zero motion (a vehicle cockpit moves with the camera, not with the
+        // world). Off unless <bridge folder>\gtavxr_near_zero_motion.txt holds metres > 0; re-read every 180 evaluations.
+        if(nearReadCountdown_-- <= 0) {
+            nearReadCountdown_ = 180; float metres = 0;
+            unsigned mode = 0; FILE* f = nullptr;
+            if(!_wfopen_s(&f, (bridgeDir_ + L"\\gtavxr_near_zero_motion.txt").c_str(), L"r") && f) { if(fscanf_s(f, "%f %u", &metres, &mode) < 1) metres = 0; fclose(f); }
+            if(mode > 1) mode = 0;
+            if(!(metres > 0 && metres < 50)) metres = 0;
+            if(metres != nearZeroMetres_ || mode != nearMode_) { nearZeroMetres_ = metres; nearMode_ = mode;
+                say("EYE_CHAIN near_motion metres=" + std::to_string(metres) + " mode=" + (mode ? "infinity" : "zero")); }
+        }
+        k.nearZeroMetres = nearZeroMetres_; k.nearMode = nearMode_;
         LARGE_INTEGER now; QueryPerformanceCounter(&now); LARGE_INTEGER f; QueryPerformanceFrequency(&f);
         const float dtMs = e.last ? (float)(1000.0 * (now.QuadPart - e.last) / f.QuadPart) : 11.1f; e.last = now.QuadPart;
         const unsigned slot = submissions_++ % kSlots;
