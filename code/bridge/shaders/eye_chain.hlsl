@@ -9,7 +9,10 @@ cbuffer Capture : register(b0)
     float2 Size;               // render pixels
     float2 Jitter;             // measured image shift of this pair's jitter, render pixels, +x right, +y down
     uint Reset;                // 1 = no history: zero motion
-    uint3 CapturePad;
+    float NearZeroMetres;      // > 0: pixels nearer than this are treated as attached to the camera (see NearMode)
+    uint NearMode;             // 0: zero motion; 1: reproject them at infinity (camera rotation only) - a windscreen,
+                               //    which writes depth, then carries the motion of the world seen through it
+    uint CapturePad;
 };
 Texture2D<float4> EyeColor : register(t0);
 Texture2D<float> EyeDepth : register(t1);
@@ -31,9 +34,12 @@ RWTexture2D<float2> MotionOut : register(u2);
     {
         const float2 u = float2(id.xy) + 0.5 - Jitter;
         const float2 ndc = float2(u.x / Size.x * 2 - 1, 1 - u.y / Size.y * 2);
-        const float4 rel = mul(RelFromClip, float4(ndc, d, 1));   // homogeneous: the far plane / sky stays a direction
+        float4 rel = mul(RelFromClip, float4(ndc, d, 1));   // homogeneous: the far plane / sky stays a direction
+        const bool attached = NearZeroMetres > 0 && abs(rel.w) > 1e-20 && dot(rel.xyz / rel.w, rel.xyz / rel.w) < NearZeroMetres * NearZeroMetres;
+        if (attached && NearMode == 1)
+            rel = mul(RelFromClip, float4(ndc, 0, 1));      // reverse-Z far plane: a direction, rotation-only reprojection
         const float4 prev = mul(PrevClipFromRel, rel);
-        if (abs(prev.w) > 1e-20)
+        if ((!attached || NearMode == 1) && abs(prev.w) > 1e-20)
         {
             const float2 p = prev.xy / prev.w;
             motion = float2((p.x + 1) * 0.5 * Size.x, (1 - p.y) * 0.5 * Size.y) - u;
