@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace GtavxrSuite {
     // Every visible word, in Spanish and English. Plain words, the player's side of the screen.
@@ -106,12 +107,15 @@ namespace GtavxrSuite {
             {"set.update.check",new[]{"Buscar actualizaciones","Check for updates"}},
             {"set.update.failed",new[]{"No se pudo comprobar la actualización.","Could not check for updates."}},
             {"set.update.open",new[]{"Abrir release","Open release"}},
-            {"set.update.portable",new[]{"Reemplazar launcher 1.0.0","Replace 1.0.0 launcher"}},
+            {"set.update.portable",new[]{"Reemplazar launcher anterior","Replace previous launcher"}},
             {"set.update.verify",new[]{"Verificar descarga","Verify download"}},
             {"set.update.verify.hint",new[]{"Cuando termine la descarga, selecciona el EXE para comprobar su tamaño y SHA-256 antes de abrirlo.","When the download finishes, select the EXE to check its size and SHA-256 before opening it."}},
-            {"set.update.verified",new[]{"Descarga verificada. Cierra la Suite y abre el EXE descargado.","Download verified. Close the Suite and open the downloaded EXE."}},
-            {"set.update.portable.hint",new[]{"Selecciona un EXE portable 1.0.0 para actualizarlo o retirar esa copia.","Select a portable 1.0.0 EXE to update it or remove that copy."}},
-            {"set.update.legacy",new[]{"Copia portable 1.0.0","Portable 1.0.0 copy"}},
+            {"set.update.verified",new[]{"Descarga verificada. Cierra esta Suite, abre el EXE descargado y pulsa Actualizar GTAVXR en Jugar. Ese paso reemplaza el launcher instalado (el de tus accesos directos) y actualiza la biblioteca; tus perfiles, partidas VR y mods se conservan.","Download verified. Close this Suite, open the downloaded EXE and press Update GTAVXR on Play. That step replaces the installed launcher (the one your shortcuts open) and updates the library; your profiles, VR saves and mods are kept."}},
+            {"set.update.hint",new[]{"Busca la versión nueva en GitHub Releases. El launcher instalado se actualiza desde el EXE nuevo con Actualizar GTAVXR.","Looks for the new version on GitHub Releases. The installed launcher is updated from the new EXE with Update GTAVXR."}},
+            {"set.update.portable.hint",new[]{"Una copia portable es un EXE de GTAVXR que guardaste fuera del launcher instalado. Elige una anterior para reemplazarla por esta versión o retirarla; la biblioteca y tus perfiles no cambian. Sólo se aceptan copias publicadas de GTAVXR sin modificar.","A portable copy is a GTAVXR EXE you keep outside the installed launcher. Choose an earlier one to replace it with this version or remove it; the library and your profiles do not change. Only unmodified published GTAVXR copies are accepted."}},
+            {"set.remove.libraries",new[]{"Bibliotecas de GTAVXR que se borrarán:","GTAVXR libraries that will be deleted:"}},
+            {"set.remove.launchers",new[]{"Launcher instalado y accesos directos que se borrarán:","Installed launcher and shortcuts that will be deleted:"}},
+            {"set.update.legacy",new[]{"Copia portable anterior","Previous portable copy"}},
             {"set.update.legacy.replace",new[]{"Reemplazar","Replace"}},
             {"set.update.legacy.remove",new[]{"Retirar copia","Remove copy"}},
             {"set.update.legacy.removed",new[]{"Copia anterior retirada.","Previous copy removed."}},
@@ -120,7 +124,7 @@ namespace GtavxrSuite {
             {"set.remove.hint",new[]{"Quita la Suite y los datos de VR de este usuario.","Removes the Suite and this user's VR data."}},
             {"set.steam.menu",new[]{"Tecla de menú en SteamVR","SteamVR menu key"}},
             {"set.steam.menu.off",new[]{"Desactivada","Off"}},
-            {"set.remove.warn",new[]{"Se borrarán el launcher, sus accesos directos, los perfiles, partidas VR, mods importados y preferencias. Las partidas normales de GTA se conservan.","The launcher, its shortcuts, VR profiles and saves, imported mods, and settings will be deleted. Regular GTA saves are kept."}},
+            {"set.remove.warn",new[]{"Se borrarán el launcher, sus accesos directos, los perfiles, partidas VR, mods importados y preferencias, y los modelos DLSS que copiaste en la carpeta dlss de la Suite. Se conservan las partidas normales de GTA, los modelos DLSS de otras carpetas que elegiste, OFXR y sus perfiles, y las copias portables del launcher que guardaste en otro sitio.","The launcher, its shortcuts, VR profiles and saves, imported mods, settings, and the DLSS models you copied into the Suite dlss folder will be deleted. Regular GTA saves, DLSS models in other folders you chose, OFXR and its profiles, and portable launcher copies you keep elsewhere are kept."}},
             {"compat.title",new[]{"Componentes opcionales","Optional components"}},
             {"compat.once",new[]{"Puedes continuar esta sesión sin los componentes afectados. Tu selección guardada se conserva.",
                                  "You can continue this session without the affected components. Your saved selection is preserved."}},
@@ -131,6 +135,8 @@ namespace GtavxrSuite {
                                        "Choose a short, available local path for the Suite library."}},
             {"dist.ready",new[]{"Instalación preparada","Installation ready"}},
             {"dist.required",new[]{"Instala esta versión de GTAVXR antes de jugar.","Install this version of GTAVXR before playing."}},
+            {"dist.kept",new[]{"{0} archivo(s) guardados de una versión anterior ya no tenían su contenido original. No se borraron: quedan en {1}.","{0} stored file(s) of an earlier version no longer had their original content. They were not deleted: they are in {1}."}},
+            {"dist.runtime.incomplete",new[]{"Faltan componentes de GTAVXR en el registro de la versión. Pulsa Ajustes > Comprobar archivos para reconstruirlos.","GTAVXR components are missing from the version record. Select Settings > Check files to rebuild them."}},
             {"dist.runtime",new[]{"Un componente de GTAVXR cambió. Pulsa Instalar GTAVXR para repararlo.","A GTAVXR component changed. Select Install GTAVXR to repair it."}},
             {"dist.base",new[]{"Los archivos de GTA Legacy cambiaron o no coinciden con la base del parche.","The GTA Legacy files changed or do not match the patch base."}},
             {"gfx.dlss.check",new[]{"Comprobando modelos DLSS…","Checking DLSS models…"}},
@@ -288,22 +294,73 @@ namespace GtavxrSuite {
             {"gfx.ofxr",new[]{"OFXR","OFXR"}},
             {"gfx.ofxr.none",new[]{"OFXR no está instalado (opcional).","OFXR is not installed (optional)."}},
             {"gfx.ofxr.status",new[]{"Estado: {0}","Status: {0}"}},
-            {"ofxr.generating",new[]{"generando fotogramas","generating frames"}},
-            {"ofxr.armed",new[]{"listo","armed"}},
-            {"ofxr.paused",new[]{"en pausa","paused"}},
-            {"ofxr.loaded",new[]{"cargado en GTAVXR","loaded in GTAVXR"}},
-            {"ofxr.no-data",new[]{"instalado; sin datos de GTAVXR ahora","installed; no GTAVXR data right now"}},
+            {"ofxr.detected",new[]{"instalado; GTAVXR no se está jugando ahora","installed; GTAVXR is not being played now"}},
+            {"ofxr.insufficient",new[]{"sin datos suficientes de esta partida","not enough data about this game"}},
+            {"ofxr.active",new[]{"activo en esta partida, sin generar fotogramas","active in this game, not generating frames"}},
+            {"ofxr.unconfirmed",new[]{"activo en esta partida; OFXR no indica si genera fotogramas","active in this game; OFXR does not say whether it generates frames"}},
+            {"run.ofxr",new[]{"OFXR: {0}","OFXR: {0}"}},
+            {"ofxr.paused",new[]{"activo en esta partida, en pausa","active in this game, paused"}},
+            {"ofxr.generating",new[]{"generando fotogramas en esta partida","generating frames in this game"}},
+            {"ofxr.unmeasured",new[]{"sin medir","not measured"}},
+            {"gfx.ofxr.measures",new[]{"FPS del juego: {0} · FPS de salida: {1} · Multiplicador: {2}","Game FPS: {0} · Output FPS: {1} · Multiplier: {2}"}},
+            {"ofxr.reason.game_not_running",new[]{"La partida ya terminó.","The game has ended."}},
+            {"ofxr.reason.no_status",new[]{"OFXR no publica su estado: abre su bandeja y activa «Export status.json».","OFXR is not publishing its status: open its tray and turn on \"Export status.json\"."}},
+            {"ofxr.reason.status_too_large",new[]{"El estado de OFXR no se puede leer.","OFXR's status cannot be read."}},
+            {"ofxr.reason.status_unreadable",new[]{"El estado de OFXR no se puede leer ahora; se vuelve a intentar al actualizar.","OFXR's status cannot be read right now; it is tried again on refresh."}},
+            {"ofxr.reason.schema",new[]{"El estado de OFXR tiene un formato que la Suite no conoce.","OFXR's status has a format the Suite does not know."}},
+            {"ofxr.reason.updated_missing",new[]{"El estado de OFXR no indica cuándo se escribió.","OFXR's status does not say when it was written."}},
+            {"ofxr.reason.updated_future",new[]{"El estado de OFXR tiene una hora futura; revisa el reloj del PC.","OFXR's status has a future time; check the PC clock."}},
+            {"ofxr.reason.updated_before_game",new[]{"El estado de OFXR es anterior a esta partida.","OFXR's status is older than this game."}},
+            {"ofxr.reason.updated_stale",new[]{"El estado de OFXR no se ha actualizado en los últimos segundos.","OFXR's status has not been updated in the last seconds."}},
+            {"ofxr.reason.no_session",new[]{"OFXR no ve ningún juego ahora.","OFXR does not see any game right now."}},
+            {"ofxr.reason.other_process",new[]{"El estado de OFXR describe otro programa.","OFXR's status describes another program."}},
+            {"ofxr.reason.other_pid",new[]{"El estado de OFXR describe otro proceso, no esta partida.","OFXR's status describes another process, not this game."}},
             {"gfx.ofxr.open",new[]{"Abrir OFXR","Open OFXR"}},
             {"gfx.ofxr.recommend",new[]{"Crear perfil recomendado","Create recommended profile"}},
             {"gfx.ofxr.done",new[]{"Perfil de OFXR ajustado (copia guardada al lado).","OFXR profile adjusted (copy kept beside it)."}},
             {"gfx.ofxr.notray",new[]{"Para abrir OFXR desde aquí, ábrelo una vez o elige OFXRBridgeTray.exe en Ajustes.","To open OFXR from here, open it once or choose OFXRBridgeTray.exe in Settings."}},
             {"gfx.ofxr.noprofile",new[]{"OFXR aún no tiene perfil de GTAVXR: se crea la primera vez que juegas con OFXR activo.","OFXR has no GTAVXR profile yet: it is created the first time you play with OFXR on."}},
             {"gfx.ofxr.ssw",new[]{"Si usas la generación de fotogramas de OFXR, apaga SSW en Virtual Desktop: no deben funcionar los dos a la vez.","If you use OFXR frame generation, turn off SSW in Virtual Desktop: the two must not run at once."}},
+            {"code.OFXR_NEURAL_ALREADY_ACTIVE",new[]{"El renderizado neural (NR) de OFXR está activo en su perfil de GTAVXR. No se usan dos NR a la vez: apaga el NR de OFXR (Crear perfil recomendado) o el de GTAVXR.","OFXR's neural rendering (NR) is on in its GTAVXR profile. Two NR passes are never used together: turn off OFXR's NR (Create recommended profile) or GTAVXR's."}},
+            {"code.OFXR_NEURAL_UNKNOWN",new[]{"No se puede saber si el NR de OFXR está activo: hay varios perfiles de OFXR que podrían ser de GTAVXR, o ninguno todavía y su configuración inicial lo activa.","It cannot be known whether OFXR's NR is on: several OFXR profiles could be GTAVXR's, or there is none yet and its starting configuration turns it on."}},
+            {"code.DLSS_MODEL_MISSING",new[]{"No se encuentran los modelos DLSS elegidos.","The chosen DLSS models cannot be found."}},
+            {"code.DLSS_NEURAL_MODEL_MISSING",new[]{"No se encuentra el modelo de renderizado neural (nvngx_dlssnr.dll).","The neural rendering model (nvngx_dlssnr.dll) cannot be found."}},
+            {"code.DLSS_PATH_TOO_LONG",new[]{"La carpeta de DLSS tiene una ruta demasiado larga.","The DLSS folder path is too long."}},
+            {"code.MOD_MISSING",new[]{"falta en la biblioteca","missing from the library"}},
+            {"code.MOD_COMPANION_MISSING",new[]{"falta el mod que necesita","the mod it needs is missing"}},
+            {"code.MOD_CONTENT_DEPENDENCY_MISSING",new[]{"falta contenido del que depende","content it depends on is missing"}},
+            {"set.repair.busy",new[]{"Estos archivos están dañados pero otro programa los tiene abiertos. Cierra el juego y otros programas y vuelve a pulsar Comprobar archivos:","These files are damaged but another program has them open. Close the game and other programs and select Check files again:"}},
+            {"set.repair.missing",new[]{"Archivos dañados sin copia verificada. Usa Actualizar GTAVXR o vuelve a importar el mod si le pertenece.","Damaged files without a verified copy. Use Update GTAVXR or import the mod again if it owns the file."}},
+            {"set.repair.deferred",new[]{"La reconstrucción de estos archivos está pendiente por el bloqueo anterior.","Rebuilding these files is pending until the lock above is released."}},
+            {"set.repair.aside",new[]{"Copias dañadas guardadas en reports\\damaged-store:","Damaged copies saved in reports\\damaged-store:"}},
+            {"err.update.blob_busy",new[]{"El archivo {0} está ocupado. Cierra el programa que lo está usando y vuelve a pulsar Actualizar GTAVXR.\n\n{1}","{0} is in use. Close the program using it, then select Update GTAVXR again.\n\n{1}"}},
+            {"gfx.ofxr.undo",new[]{"Deshacer cambio en OFXR","Undo OFXR change"}},
+            {"gfx.ofxr.undone",new[]{"nr_enabled de OFXR vuelve a su valor anterior; el resto del perfil queda como lo tienes ahora.","OFXR's nr_enabled is back to its earlier value; the rest of the profile stays as you have it now."}},
+            {"gfx.ofxr.ambiguous",new[]{"Hay varios perfiles de OFXR que podrían ser de GTAVXR. La Suite no cambia ninguno; deja solo el que usa OFXR.","Several OFXR profiles could be GTAVXR's. The Suite changes none of them; keep only the one OFXR uses."}},
+            {"ofxr.err.OFXR_AMBIGUOUS_PROFILE",new[]{"Hay varios perfiles de OFXR que podrían ser de GTAVXR; no se cambió nada.","Several OFXR profiles could be GTAVXR's; nothing was changed."}},
+            {"set.remove.update_pending",new[]{"Hay una actualización pendiente. Selecciona Actualizar GTAVXR para reanudarla.","An update is unfinished. Select Update GTAVXR to resume."}},
+            {"ofxr.err.OFXR_NO_BACKUP",new[]{"No hay copia anterior del perfil de OFXR; no se cambió nada.","There is no earlier copy of the OFXR profile; nothing was changed."}},
+            {"ofxr.err.OFXR_IN_USE",new[]{"El perfil de OFXR está en uso o no se puede escribir ahora; quedó como estaba. Cierra la bandeja de OFXR y vuelve a intentarlo.","The OFXR profile is in use or cannot be written now; it was left as it was. Close the OFXR tray and try again."}},
+            {"ofxr.err.OFXR_CHANGED",new[]{"nr_enabled cambió en el perfil de OFXR después de la recomendación; la Suite no lo toca. El perfil y su copia anterior (.gtavxr-before) quedan al lado para que elijas.","nr_enabled changed in the OFXR profile after the recommendation; the Suite does not touch it. The profile and its earlier copy (.gtavxr-before) stay side by side for you to choose."}},
+            {"ofxr.err.OFXR_BACKUP_EXISTS",new[]{"La copia anterior (.gtavxr-before) no permite deshacer la recomendación. Mueve el archivo a otra carpeta para conservarlo y vuelve a intentar Crear perfil recomendado.","The earlier copy (.gtavxr-before) cannot be used to undo the recommendation. Move it to another folder for safekeeping, then try Create recommended profile again."}},
+            {"ofxr.err.OFXR_CONFLICT",new[]{"La copia anterior del perfil de OFXR ya no indica un valor de nr_enabled conocido; no se cambió nada y se conservan los dos archivos.","The earlier copy of the OFXR profile no longer names a known nr_enabled value; nothing was changed and both files are kept."}},
             {"ofxr.err.OFXR_NO_PROFILE",new[]{"OFXR aún no tiene perfil de GTAVXR. Juega una vez con OFXR activo y vuelve a intentarlo.","OFXR has no GTAVXR profile yet. Play once with OFXR on and try again."}},
             {"ofxr.err.OFXR_NO_KEY",new[]{"El perfil de OFXR no tiene el ajuste nr_enabled; no se cambió nada.","The OFXR profile has no nr_enabled setting; nothing was changed."}},
             {"ofxr.err.OFXR_UNKNOWN_FORMAT",new[]{"El perfil de OFXR tiene un formato que la Suite no conoce; no se cambió nada.","The OFXR profile has a format the Suite does not know; nothing was changed."}},
             {"time.now",new[]{"ahora","just now"}},{"time.min",new[]{"hace {0} min","{0} min ago"}},{"time.h",new[]{"hace {0} h","{0} h ago"}},{"time.d",new[]{"hace {0} días","{0} days ago"}},{"time.d1",new[]{"ayer","yesterday"}},
         };
+        internal static bool Has(string key){return T.ContainsKey(key);}
+        // A diagnostic line "<name> · CODE" or "CODE": the known code is shown in words, followed by the code for support.
+        public static string Code(string line){
+            if(line==null)return null;
+            int dot=line.LastIndexOf(" · ",StringComparison.Ordinal);
+            string code=dot<0?line.Trim():line.Substring(dot+3).Trim();
+            if(!T.ContainsKey("code."+code))return line;
+            return (dot<0?"":line.Substring(0,dot)+" · ")+S("code."+code)+" ("+code+")";
+        }
+        public static string Codes(string text){
+            return text==null?null:String.Join("\n",text.Replace("\r\n","\n").Split('\n').Select(Code));
+        }
         public static string S(string key){string[] v;if(!T.TryGetValue(key,out v))return key;return Lang=="en"?v[1]:v[0];}
         public static string F(string key,params object[] a){return String.Format(S(key),a);}
         public static string Ago(string utc){

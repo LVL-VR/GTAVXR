@@ -2,33 +2,51 @@
 
 This guide uses the default **Quest Touch** bindings. **L3** and **R3** mean pressing the left or right thumbstick inward. **Tilt** means moving a stick in a direction. The **grip** is the side button, and the **trigger** is the index-finger button. **Menu** is on the left controller. In-game prompts reflect the current context and any bindings you have changed. [Compatibility](COMPATIBILITY.md)
 
+## Open the VR menu and recenter
+
+| Active runtime | Open or close the VR menu | Recenter the view |
+| --- | --- | --- |
+| **SteamVR** (including Steam Link) | Center both sticks, click **L3 + R3** together and release both. With the game window focused, **F9** is the default keyboard alternative. Change it under **Suite → Settings → SteamVR menu key**. | Open the VR menu and select **Recenter**. |
+| **Other OpenXR runtimes**, including VDXR | Press **Menu** on the left controller. | Face forward in your usual posture, center both sticks, click **L3 + R3** together and release both. You can also select **Recenter** in the menu. |
+
+The two-stick shortcut needs both stick clicks. Start the two presses within about 0.1 seconds of each other. If the first stick is still held when you press the second after the 0.1-second window, the second click is ignored until you release it: it does not open the menu, recenter, start the virtual D-pad or reach the game, and the first click keeps its own action, such as stealth or cover on **L3**. Separate clicks without overlap keep their individual actions. Keep both sticks centered for the menu or recenter. For the virtual D-pad, hold both clicks and tilt the right stick. Close the phone and menus before recentering.
+
 ## Your first few minutes
 
 1. Enter Story Mode. If VR is off, focus the GTA window and press **F10**. Press **F10** by itself to switch between flatscreen and VR.
-2. Face forward in your playing posture. Press **Menu** on the left controller and select **Recenter**. Recenter again whenever the camera, your position, or your body pose is out of alignment. To adjust standing and seated height separately, open **Settings → Calibration → Height** in the VR menu. [How to recenter](TROUBLESHOOTING.md#recenter-the-view)
-3. In the VR menu, open **Settings → Movement** to choose smooth or snap turning and whether movement follows your headset or hand. Press **Menu** to return to the game.
+2. Face forward and [recenter the view](#open-the-vr-menu-and-recenter). To adjust standing and seated height separately, open **Settings → Calibration → Height** in the VR menu. [Calibration help](TROUBLESHOOTING.md#recenter-the-view)
+3. In the VR menu, open **Settings → Movement** to choose smooth or snap turning and whether movement follows your headset or hand. Use **Return to Game** or the same menu shortcut to close the menu.
 4. On foot, tilt the left thumbstick to move and the right thumbstick to turn. To check head tracking, look around and move slightly within your play area. [VR menu and Trainer](VR_MENU.md)
 
 ## Default controls
 
 | Action | Control |
 | --- | --- |
-| Open or close the VR menu | With SteamVR as the active runtime and both stick clicks available, press **L3 + R3** with the sticks centered, then release both. **F9** is the SteamVR keyboard alternative and can be changed in Suite settings. Other runtimes use **Menu** on the left controller. Use **Game Menu** in the VR menu to open the GTA pause menu. |
+| Open or close the VR menu | Use the [menu shortcut for your runtime](#open-the-vr-menu-and-recenter). **Game Menu** in the VR menu opens the GTA pause menu. |
+| Recenter quickly | See the [runtime shortcuts](#open-the-vr-menu-and-recenter). Outside SteamVR, quick recenter works standing or seated. A menu or phone that takes control during the gesture cancels it. |
 | Navigate a menu | Use a thumbstick to highlight a row or change a value, **A** to select, and **B** to go back. Release the buttons and center the thumbstick when opening the menu. |
 | Move and turn on foot | Use the left thumbstick to move and the right thumbstick to turn. Adjust turning and movement direction under **Movement**. |
 | Context actions | Hold **L3** and press **A** for the primary action or **B** for the secondary action. Follow the in-game prompt for the current situation. |
 | Enter or leave stealth mode | On foot, briefly click **L3** once. Close the phone, weapon wheel, and menus first. |
 | Take cover or use a special ability | Stand near a cover surface with both controllers active. Close the phone, weapon wheel, and menus, then hold **L3** by itself for about half a second. Click **L3** twice to use a special ability when available. |
-| Use the phone | Press **R3** when the phone is available. Navigate with the right thumbstick, use **A** to select, and use **B** to go back. |
-| Use the virtual D-pad | Outside the phone, press **L3 and R3**, keep them pressed and tilt the right thumbstick in the desired direction. Release both clicks to exit D-pad mode. In SteamVR, keep the sticks centered throughout the gesture to open the VR menu instead. |
+| Use the phone | Click and release **R3** when the phone is available. At the wheel, a single click may wait briefly for the second click. Navigate with the right thumbstick, use **A** to select, and use **B** to go back. |
+| Use the virtual D-pad | Outside the phone, press **L3 and R3**, keep them pressed and tilt the right thumbstick in the desired direction. Release both clicks to exit D-pad mode. In SteamVR, keep the sticks centered throughout the gesture to open the VR menu instead. In other runtimes, the centered gesture recenters the view. |
 | Enter or exit a vehicle | Press **Y** with the standard bindings when the game allows it. |
 | Switch the driving camera | While driving, click **R3** twice within about 0.3 seconds to switch between the cockpit and third-person views. Close the phone, weapon or radio wheel, and any open menu first. Keep **L3** and **Menu** released. |
 | Switch protagonists | Open **VR Menu → Story Character** and choose an available protagonist. For the first switch to Trevor in the prologue, use a standard gamepad or keyboard and mouse. [First session](FIRST_SESSION.md#starting-a-new-game) |
 | Remap buttons | Open **VR Menu → Settings → Controller buttons** and choose the on-foot, vehicle, or aircraft layout. For gestures and aircraft weapons, use [VR action bindings](#vr-action-bindings). |
 
+## Remap GTA pad buttons
+
+Open **VR Menu → Settings → Controller buttons**. Choose **On foot**, **Vehicle**, or **Aircraft** with left or right. Highlight **A, B, X, Y, Left stick click**, or **Right stick click** and use left or right to set the pad input GTA receives. **Capture button** jumps to the row for the next supported button you press.
+
+The pad targets include the original input, A/B/X/Y, the left and right bumpers, L3/R3, Back, the four D-pad directions, or Off. **Copy to the other contexts** copies the current layout to both other contexts. **Reset this context** restores only the current layout. The layout is saved with the profile.
+
+Use **VR action bindings** for the seven GTAVXR shortcuts below. The controller maps leave the axes, physical grip gestures, weapon-hand firing, phone navigation, and the VR menu and quick-recenter shortcuts on their original inputs. Use **Free hand buttons** for [weapon support and reload parts](#using-either-hand-and-dual-wielding). Use **Suite → Settings → SteamVR menu key** for the SteamVR keyboard shortcut.
+
 ## VR action bindings
 
-Open **VR Menu → Settings → Controller buttons → VR action bindings**. Use Left or Right to pick **A, B, X, Y, L3, or R3**. These settings are saved per profile. **Reset VR actions** restores the defaults in the table. The separate GTA pad maps remain available from **Controller buttons**.
+Open **VR Menu → Settings → Controller buttons → VR action bindings**. Highlight an action, then use left or right to cycle the available button and gesture combinations. The menu offers **A, B, X, Y, L3, and R3**. These settings are saved per profile. **Reset VR actions** restores the defaults in the table. The separate GTA pad maps remain available from **Controller buttons**.
 
 | Action | Default | What you can change |
 | --- | --- | --- |
@@ -42,7 +60,7 @@ Open **VR Menu → Settings → Controller buttons → VR action bindings**. Use
 
 A double-click requires two presses within 0.3 seconds with a release between them. If the phone and camera share a button, a single press waits for that window while driving. A double-click changes the camera and leaves the phone closed. Assign them to different buttons if you want immediate phone takeout on release.
 
-The menu skips choices that would assign the same gesture to more than one action in the same context. An active VR action can reserve its button before GTA receives the normal pad input. For example, moving **Phone** to A removes its normal gameplay use as a solo press while the phone shortcut is available. The **L3+A** and **L3+B** context chords keep priority. The change does not affect A or B inside the phone.
+The menu skips conflicting choices in overlapping contexts. Tap and double-tap can share a button. An aircraft Press action reserves the button while it is held and cannot share it with another action in that context. An active VR action can reserve its button before GTA receives the normal pad input. For example, moving **Phone** to A removes its normal gameplay use as a solo press while the phone shortcut is available. The **L3+A** and **L3+B** context chords keep priority. The change does not affect A or B inside the phone.
 
 ## Weapon wheel and holsters
 
@@ -62,7 +80,7 @@ If the wheel does not open, close the VR menu, check that motion controls are en
 - **Support one weapon.** Bring your free hand to the support point and hold that hand's **trigger**. For compatible pistols and compact SMGs, enable **VR Menu → Settings → Weapons → Support on one-handed guns**.
 - **Adjust the weapon or support position.** Open **VR Menu → Settings → Calibration** and choose the weapon or support grip for the relevant side. The left-hand settings follow the right-hand settings until you set separate values. [Calibration options](VR_MENU.md#vr-settings)
 
-In GTAVXR 1.0.2, **Settings → Weapons → Free hand buttons** exchanges the free hand's support and reload-part buttons. The instructions below use the default controls. With **Grip for support**, use the free-hand trigger for the steps that use its grip to hold a reload part or take ammunition. The weapon-hand latch, hammer gesture, and fire control keep their usual buttons.
+Under **Settings → Weapons → Free hand buttons**, you can exchange the free hand's support and reload-part buttons. The instructions below use the default controls. With **Grip for support**, use the free-hand trigger for the steps that use its grip to hold a reload part or take ammunition. Keep using the usual weapon-hand latch, hammer and fire controls. World-object grabs, holsters, driving and melee keep their own controls. [Free-hand weapon buttons](VR_MENU.md#choose-the-free-hand-weapon-buttons)
 
 ### Reloading
 
@@ -106,9 +124,12 @@ For a **Heavy Revolver**, **Heavy Revolver Mk II**, **Double-Action Revolver**, 
 | **Grab or release an object** | Bring an empty hand near an object you can grab. Hold that hand's **grip** to pick it up. Release the grip to let go. |
 | **Throw a held object** | Move your hand in the direction you want to throw and release the **grip** during the motion. The object carries the momentum it gained as you moved it. |
 | **Push an object** | Touch it with an empty hand and move your hand in the direction you want it to go. Adjust **Contact push** if you want a different amount of force. |
-| **Punch with an empty hand** | Hold that hand's **grip and trigger** to close your fist, then make the punching motion. Adjust **Strike speed** under **Physics → Advanced**. |
+| **Close your fist** | With no weapon equipped, squeeze the **trigger** of an empty hand. That hand blends into the game's closed-fist pose and opens again when you release the trigger. Each hand works on its own. This changes the hand pose. A hand that holds a weapon, an object, the phone or the steering wheel keeps its own pose, and the driver's triggers stay the throttle and the brake. |
+| **Guard against a melee attack** | On foot and unarmed, raise both free tracked hands in front of your face and hold both triggers. Keep the guard up briefly. It can block supported melee attacks from in front of you. |
+| **Punch with an empty hand** | Hold that hand's **grip and trigger**, then make the punching motion. The trigger closes the fist you see and the grip with the trigger arms the strike. Adjust **Strike speed** under **Physics → Advanced**. |
 | **Strike with a held weapon** | Enable **Gun-butt strikes** under **Settings → Weapons** to strike with a held pistol or rifle. **Weapons vs world** controls how held weapons collide with the environment and push loose objects. |
 | **Adjust force** | Open **VR Menu → Settings → Physics**. **Grab / hold** controls grip strength, **Contact push** controls pushing force, and **Body effort** controls the force your body can apply. |
+| **Reach for a light object while crouching** | With **Soft legs** enabled, lower your head and reach for the object. To adjust how far you need to lower your head for the soft-leg contact rule, use **Physics → Advanced → Crouch (soft legs)**. The default is 30 cm. |
 | **Reduce contact from your legs** | Enable **Soft legs** under **Physics** to keep your feet from pushing loose objects or bodies on the ground. |
 
 Physical interactions depend on the hand and the object. If you cannot grab something, use an empty hand, release the grip, then press it again near the object. [Physics settings](VR_MENU.md#vr-settings)

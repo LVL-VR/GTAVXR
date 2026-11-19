@@ -175,6 +175,8 @@ namespace GtavxrSuite {
             try{a();}catch(Exception e){Info(L.S("err.title"),Explain(e));S.Reload();}
         }
         public static string Explain(Exception e){
+            var busy=e as StoredBlobBusyException;
+            if(busy!=null)return L.F("err.update.blob_busy",busy.Member,busy.Path);
             var disk=e as DiskSpaceException;
             if(disk!=null){
                 string available=disk.AvailableBytes>=0?L.F("err.space.free",disk.AvailableBytes/1073741824.0):"";
@@ -187,12 +189,14 @@ namespace GtavxrSuite {
             if(m=="GAME_RUNNING")return L.S("err.running");
             if(m=="VERSION_MISSING")return L.S("err.version");
             if(m=="INSTALL_REQUIRED")return L.S("dist.required");
+            if(m.StartsWith("INSTALL_RUNTIME_INCOMPLETE:",StringComparison.Ordinal))return L.S("dist.runtime.incomplete")+"\n"+m.Substring("INSTALL_RUNTIME_INCOMPLETE:".Length);
             if(m.StartsWith("INSTALL_RUNTIME_CHANGED:",StringComparison.Ordinal))return L.S("dist.runtime")+"\n"+m.Substring("INSTALL_RUNTIME_CHANGED:".Length);
             if(m=="DELTA_BASE_MISMATCH"||m.StartsWith("INSTALL_BASE_CHANGED",StringComparison.Ordinal))return L.S("dist.base")+"\n"+m;
             if(m=="MVGA_REQUIRED")return L.S("err.mvga");
             if(m=="CONTENT_PROFILE_TWICE")return L.S("err.content2");
             if(m=="NO_CONTENT_MODS")return L.S("err.nocontent");
             if(m=="RECOVERY_REQUIRED")return L.S("rec.body");
+            if(m=="REMOVE_UPDATE_PENDING")return L.S("set.remove.update_pending");
             if(m.StartsWith("RECOVERY_SAVE_LOCATION_CHANGED:",StringComparison.Ordinal))
                 return L.S("rec.save.path")+"\n"+m.Substring("RECOVERY_SAVE_LOCATION_CHANGED:".Length).Trim();
             if(m.StartsWith("RECOVERY_GAME_LOCATION_CHANGED:",StringComparison.Ordinal))
@@ -385,7 +389,7 @@ namespace GtavxrSuite {
             if(dialog.ShowDialog()!=true)return;
             string target=dialog.FileName;
             Confirm(L.S("set.update.portable"),target,L.S("set.update.go"),
-                ()=>RunTask(L.S("set.update.portable"),()=>{SelfInstall.ReplacePublic100(target);return L.S("dist.ready");}),false);
+                ()=>RunTask(L.S("set.update.portable"),()=>{SelfInstall.ReplacePreviousLauncher(target);return L.S("dist.ready");}),false);
         }
         internal void RemoveOldPortable(){
             var dialog=new Microsoft.Win32.OpenFileDialog{Filter="GTAVXR (*.exe)|*.exe",CheckFileExists=true};
@@ -395,14 +399,15 @@ namespace GtavxrSuite {
                 Info(L.S("err.title"),L.S("set.update.legacy.installed"));return;
             }
             Confirm(L.S("set.update.legacy.remove"),target,L.S("set.update.legacy.remove"),
-                ()=>RunTask(L.S("set.update.legacy.remove"),()=>{SelfInstall.RemovePublic100(target);return L.S("set.update.legacy.removed");}),true);
+                ()=>RunTask(L.S("set.update.legacy.remove"),()=>{SelfInstall.RemovePreviousLauncher(target);return L.S("set.update.legacy.removed");}),true);
         }
         internal void RemoveCompletely(){
             Guard(()=>{
                 var location=new DataLocation(Env.DefaultDataRoot());
                 var roots=CompleteRemoval.Libraries(S.Env,location);
                 var launchers=CompleteRemoval.KnownLaunchers();
-                string destinations=String.Join("\n",roots.Concat(launchers));
+                string destinations=L.S("set.remove.libraries")+"\n"+String.Join("\n",roots)+
+                                    (launchers.Count()==0?"":"\n\n"+L.S("set.remove.launchers")+"\n"+String.Join("\n",launchers));
                 Confirm(L.S("set.remove.all"),L.S("set.remove.warn")+"\n\n"+destinations,L.S("set.remove.all"),()=>
                     RunTask(L.S("set.remove.all"),()=>{
                         if(!CompleteRemoval.KnownLaunchers().SequenceEqual(launchers,StringComparer.OrdinalIgnoreCase))
@@ -423,11 +428,12 @@ namespace GtavxrSuite {
             RunTask(L.S(upgrading?"dist.upgrade":"dist.install"),()=>{
                 string installed=S.Session.InstallEmbedded(profileId,null,System.Threading.CancellationToken.None,options);
                 var settings=S.Env.LoadSettings();settings.selected_profile=installed;S.Env.SaveSettings(settings);
-                return L.S("dist.ready");
+                var kept=S.Session.LastUpdateKept;
+                return kept==null||kept.Count==0?L.S("dist.ready"):L.S("dist.ready")+"\n\n"+L.F("dist.kept",kept.Count,System.IO.Path.GetDirectoryName(kept[0]));
             },error=>{
                 var optional=error as OptionalComponentException;
                 if(optional==null) return false;
-                Confirm(L.S("compat.title"),optional.Message+"\n\n"+L.S("compat.once"),L.S("compat.continue"),
+                Confirm(L.S("compat.title"),L.Codes(optional.Message)+"\n\n"+L.S("compat.once"),L.S("compat.continue"),
                         ()=>InstallEmbedded(profileId,optional.Retry),false);
                 return true;
             });
@@ -451,6 +457,7 @@ namespace GtavxrSuite {
             var panel=new PlayingPanel(p,v);
             panel.OnAbort=()=>Task.Factory.StartNew(()=>S.Session.Abort());
             panel.OnClose=()=>S.Session.CloseGame();
+            panel.OfxrRead=S.OfxrNow;
             ShowOverlay(panel.Root,false);
             var started=DateTime.UtcNow;DispatcherTimer clock=null;string lastStep=null;
             Action<PlayProgress> progress=pp=>Root.Dispatcher.BeginInvoke((Action)(()=>{
@@ -464,13 +471,14 @@ namespace GtavxrSuite {
             }));
             Task.Factory.StartNew(()=>S.Session.Play(profileId,progress,options)).ContinueWith(t=>Root.Dispatcher.BeginInvoke((Action)(()=>{
                 if(clock!=null)clock.Stop();
+                panel.Stop();
                 S.Busy=false;CloseOverlay();S.Reload();
                 if(t.IsFaulted){
                     var optional=t.Exception.GetBaseException() as OptionalComponentException;
                     if(optional!=null){
                         string mode=optional.Retry.GraphicsFallback;
                         string detail=mode==null?"":"\n"+L.S(mode=="native"?"compat.native":"compat.sr");
-                        Confirm(L.S("compat.title"),optional.Message+detail+"\n\n"+L.S("compat.once"),L.S("compat.continue"),
+                        Confirm(L.S("compat.title"),L.Codes(optional.Message)+detail+"\n\n"+L.S("compat.once"),L.S("compat.continue"),
                                 ()=>Play(profileId,optional.Retry),false);
                         return;
                     }
@@ -511,7 +519,16 @@ namespace GtavxrSuite {
                 .ContinueWith(t=>Root.Dispatcher.BeginInvoke((Action)(()=>{S.Busy=false;S.Reload();if(t.IsFaulted)return;
                     if(t.Result.Item1.Count>0)Toast(L.F("dev.newversion",String.Join(", ",t.Result.Item1)));
                     if(t.Result.Item2.Count>0)Toast(L.F("dev.refreshed",String.Join(", ",t.Result.Item2)));})));
-        }        public void RunTask(string title,Func<string> work,Func<Exception,bool> handled=null,Action onSuccess=null){
+        }
+
+        internal static Exception TaskError(AggregateException fault){
+            foreach(var inner in fault.Flatten().InnerExceptions)
+                for(Exception error=inner;error!=null;error=error.InnerException)
+                    if(error is StoredBlobBusyException)return error;
+            return fault.GetBaseException();
+        }
+
+        public void RunTask(string title,Func<string> work,Func<Exception,bool> handled=null,Action onSuccess=null){
             if(S.Busy)return;S.Busy=true;
             var panel=U.Col(12,U.Text(title,26,Theme.Text,true,FontWeights.SemiBold),new ProgressBar{Height=4,IsIndeterminate=true,Foreground=Theme.B(Theme.Sign),Background=Theme.B(Theme.Flap),BorderThickness=new Thickness(0),Width=420});
             panel.HorizontalAlignment=HorizontalAlignment.Center;panel.VerticalAlignment=VerticalAlignment.Center;
@@ -521,7 +538,7 @@ namespace GtavxrSuite {
                 if(!t.IsFaulted&&onSuccess!=null){onSuccess();return;}
                 S.Reload();
                 if(t.IsFaulted){
-                    var error=t.Exception.GetBaseException();
+                    var error=TaskError(t.Exception);
                     if(handled==null||!handled(error))Info(L.S("err.title"),Explain(error));
                 }else if(!String.IsNullOrEmpty(t.Result))Toast(t.Result);
             })));
@@ -529,7 +546,7 @@ namespace GtavxrSuite {
     }
 
     public static class SuiteApp {
-        public const string Version="1.0.2";
+        public const string Version="1.0.5";
         static void EnsureApp(){if(Application.Current==null){var app=new Application{ShutdownMode=ShutdownMode.OnMainWindowClose};app.Resources.MergedDictionaries.Add(Theme.Resources());}}
         public static Window CreateWindow(AppState state,Shell shell){
             var w=new Window{Title="GTAVXR",Width=1280,Height=860,MinWidth=1040,MinHeight=700,Background=Theme.B(Theme.Terminal),Content=shell.Root,

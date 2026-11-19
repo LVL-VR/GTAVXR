@@ -4,6 +4,12 @@ using System.IO;
 namespace GtavxrSuite {
     public class FileRef { public string path {get;set;} public string sha256 {get;set;} public long bytes {get;set;} }
 
+    sealed class StoredBlobBusyException : IOException {
+        internal readonly string Hash, Path, Member;
+        internal StoredBlobBusyException(string hash,string path,string member,IOException inner)
+            : base("Stored blob is in use: "+path,inner){Hash=hash;Path=path;Member=member;}
+    }
+
     // Content-addressed file store. Versions and mods keep each distinct file once,
     // so 125, 155 and later builds share their identical game data.
     public sealed class Blobs {
@@ -25,6 +31,40 @@ namespace GtavxrSuite {
             try{File.Move(tmp,dest);}catch(IOException){if(!File.Exists(dest))throw;File.Delete(tmp);}
             File.SetAttributes(dest,FileAttributes.ReadOnly);
             return dest;
+        }
+        internal static bool IsSharingViolation(IOException error){
+            return error.HResult==unchecked((int)0x80070020)||error.HResult==unchecked((int)0x80070021);
+        }
+
+        // The source already belongs to a verified embedded package. Swap a damaged copy and keep it for recovery.
+        internal void RepairPackageCopy(string source,FileRef file,string reports){
+            string dest=PathOf(file.sha256);
+            try{
+                ReplaceDamagedCopy(source,file,dest,reports);
+            }catch(IOException error){
+                if(!IsSharingViolation(error))throw;
+                throw new StoredBlobBusyException(file.sha256,dest,file.path??System.IO.Path.GetFileName(source),error);
+            }
+        }
+
+        void ReplaceDamagedCopy(string source,FileRef file,string dest,string reports){
+            if(!File.Exists(dest))return;
+            try{Verify(file.sha256,file.bytes);return;}
+            catch(InvalidDataException){}
+            string aside=SafeFs.Under(reports,file.sha256+"-"+Ids.New());
+            string temporary=dest+"."+Ids.New()+".tmp";
+            var attributes=File.GetAttributes(dest);
+            try{
+                SafeFs.CopyNew(source,temporary,file.sha256,file.bytes);
+                File.SetAttributes(dest,FileAttributes.Normal);
+                try{File.Replace(temporary,dest,aside);}
+                catch{
+                    if(File.Exists(dest)&&!File.Exists(aside))File.SetAttributes(dest,attributes);
+                    throw;
+                }
+                File.SetAttributes(dest,FileAttributes.ReadOnly);
+                Verify(file.sha256,file.bytes);
+            }finally{if(File.Exists(temporary))SafeFs.DeleteName(temporary);}
         }
         public FileRef PutFile(string source,string relative){
             string sha=SafeFs.Hash(source);long bytes=new FileInfo(source).Length;Put(source,sha,bytes);
@@ -58,9 +98,15 @@ namespace GtavxrSuite {
                 throw SafeFs.DiskWriteFailure(dest,error);
             }
             if(new FileInfo(tmp).Length!=f.bytes||!String.Equals(SafeFs.Hash(tmp),f.sha256,StringComparison.OrdinalIgnoreCase)){File.Delete(tmp);throw new InvalidDataException("Stored file is damaged: "+f.path);}
-            File.SetAttributes(tmp,protect?FileAttributes.ReadOnly:FileAttributes.Normal);
-            if(protect&&File.Exists(dest))SafeFs.DeleteName(dest);
-            if(File.Exists(dest)){File.SetAttributes(dest,FileAttributes.Normal);File.Replace(tmp,dest,null);}else File.Move(tmp,dest);
+            try{
+                File.SetAttributes(tmp,protect?FileAttributes.ReadOnly:FileAttributes.Normal);
+                if(protect&&File.Exists(dest))SafeFs.DeleteName(dest);
+                if(File.Exists(dest)){File.SetAttributes(dest,FileAttributes.Normal);File.Replace(tmp,dest,null);}else File.Move(tmp,dest);
+            }catch(Exception){
+                // The target is held by another program (or the swap failed): leave no temporary copy beside it.
+                try{if(File.Exists(tmp)){File.SetAttributes(tmp,FileAttributes.Normal);File.Delete(tmp);}}catch(IOException){}catch(UnauthorizedAccessException){}
+                throw;
+            }
         }
     }
 }

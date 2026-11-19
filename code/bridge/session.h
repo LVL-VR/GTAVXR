@@ -53,6 +53,7 @@
 
 #include "perf147_bridge.h"
 #include "eye_chain_gpu.h" // 167-neural A2/B2
+#include "theatre_gpu.h"
 #include "world_pixel_probe.h"
 
 namespace native_xr {
@@ -164,6 +165,7 @@ struct Session {
 #include "eye_chain_session.inl" // 167-neural A2/B2
 #include "cheeky_menu_layer.inl" // CheekyFoveatedDLSS F11 menu in the headset
 #include "cheeky_gaze_publish.inl" // CheekyFoveatedDLSS per-eye FOV/forward/gaze snapshot
+#include "theatre_layer.inl"
 
     void health(const char*boundary) {
         demand(device.Get()!=nullptr,"XR_NO_DEVICE");
@@ -288,7 +290,7 @@ struct Session {
             if(event.type!=XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED)continue;
             auto&s=*reinterpret_cast<XrEventDataSessionStateChanged*>(&event);demand(s.session==session,"XR_EVENT_SESSION");state=s.state;
             log("STATE value="+std::to_string(state));
-            if(state==XR_SESSION_STATE_READY||state==XR_SESSION_STATE_STOPPING)pauseAnchor.reset();
+            if(state==XR_SESSION_STATE_READY||state==XR_SESSION_STATE_STOPPING){pauseAnchor.reset();theatreAnchor.reset();}
             if(state==XR_SESSION_STATE_READY&&!running){XrSessionBeginInfo b{XR_TYPE_SESSION_BEGIN_INFO};b.primaryViewConfigurationType=XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;check(api.BeginSession(session,&b),"BeginSession");running=true;}
             if(state==XR_SESSION_STATE_STOPPING&&running){demand(!begun,"XR_STOP_WITH_OPEN_FRAME");check(api.EndSession(session),"EndSession");running=false;}
             if(state==XR_SESSION_STATE_EXITING||state==XR_SESSION_STATE_LOSS_PENDING)terminal=true;
@@ -327,7 +329,7 @@ struct Session {
                     timingFrames=timingLate=0;timingSumMs=timingMaxMs=0;}}
             timingLast=now.QuadPart;
         }
-        if(pauseSpaceChange&&timing.predictedDisplayTime>=pauseSpaceChange){pauseAnchor.reset();pauseSpaceChange=0;}
+        if(pauseSpaceChange&&timing.predictedDisplayTime>=pauseSpaceChange){pauseAnchor.reset();theatreAnchor.reset();pauseSpaceChange=0;}
         XrFrameBeginInfo bi{XR_TYPE_FRAME_BEGIN_INFO};check(perf147.cpu("xrBeginFrame",[&](){return api.BeginFrame(session,&bi);}),"BeginFrame");begun=true;++frame;generation=gen;
         perf147.open(device.Get(),context.Get(),frame,generation);
         health("begin_after");
@@ -481,6 +483,7 @@ struct Session {
         actions.stop_rumble();rumbleTick=0;close_scope_optics();scopeSources.close();scopeSourceCaptureEnabled=false;spatialOwnerGate=gx_haptic::ImmediateOwnerGate();
         release_frame_images();
         if(begun)finish(0,0,true);
+        close_theatre(); // its views of the eye swapchain images go first
         close_eye_chain(); // 167-neural B2: before the swapchains it draws into
         close_overlay();
         close_cheeky_menu();
@@ -496,7 +499,7 @@ struct Session {
         actions.close_spaces(); // action spaces are session children, destroy BEFORE session.
         if(space){check(api.DestroySpace(space),"DestroySpace");space={};}if(session){check(api.DestroySession(session),"DestroySession");session={};}
         actions.close();
-        if(instance){check(api.DestroyInstance(instance),"DestroyInstance");instance={};}context.Reset();device.Reset();api.Unload();log("CLOSED submitted="+std::to_string(submitted)+" menu_frames="+std::to_string(menu_frames));
+        if(instance){check(api.DestroyInstance(instance),"DestroyInstance");instance={};}context.Reset();device.Reset();api.Unload();log("CLOSED submitted="+std::to_string(submitted)+" menu_frames="+std::to_string(menu_frames)+" theatre_frames="+std::to_string(theatre_frames));
     }
 };
 }

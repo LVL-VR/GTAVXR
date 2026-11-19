@@ -160,17 +160,32 @@ namespace GtavxrSuite {
             }
             return best;
         }
+        // The game process this Suite started and still waits for (pid, creation time, executable), else null.
+        public ChildIdentity RunningGame(){lock(gate){return current==null?null:current.game;}}
         public bool GameRunning(){
-            foreach(string n in env.GameProcessNames){var ps=Process.GetProcessesByName(n);bool any=ps.Any(Alive);foreach(var p in ps)p.Dispose();if(any)return true;}
+            foreach(string name in env.GameProcessNames){
+                var processes=Process.GetProcessesByName(name);
+                try{
+                    foreach(var process in processes)
+                        if(GameProcessRunning(()=>process.HasExited,()=>{
+                            process.Refresh();
+                            return process.Threads.Count;
+                        }))return true;
+                }finally{foreach(var process in processes)process.Dispose();}
+            }
             return false;
         }
-        // An elevated game cannot be opened from a normal Suite (HasExited: Access is denied). The system snapshot
-        // still lists its threads: an exited process kept listed by a lingering reference has none, a live one does.
-        // Anything not provably exited counts as running.
-        static bool Alive(Process p){
-            try{return !p.HasExited;}
-            catch(System.ComponentModel.Win32Exception){
-                try{return p.Threads.Count>0;}catch(Exception){return true;}
+
+        // A process that has exited can remain in the Windows process list while a handle
+        // is held by an elevated process. Require a fresh zero-thread snapshot to ignore it.
+        internal static bool GameProcessRunning(Func<bool> hasExited,Func<int> freshThreadCount){
+            try{return !hasExited();}
+            catch(System.ComponentModel.Win32Exception error){
+                const int errorAccessDenied=5;
+                if(error.NativeErrorCode!=errorAccessDenied)throw;
+                try{return freshThreadCount()!=0;}
+                catch(System.ComponentModel.Win32Exception){return true;}
+                catch(InvalidOperationException){return true;}
             }
         }
 
@@ -491,6 +506,12 @@ namespace GtavxrSuite {
             foreach(string k in new[]{"GX_DEV_ROOT","SIMXR_DATA_DIR","GTAVXR_DIAGNOSTIC","GTAVXR_SCRIPTS_PATH","GTAVXR_LOADER_PATH","GTAVXR_VR_SETTINGS","GTAVXR_SESSIONS_ROOT","GTAVXR_DLSS_DIR","GTAVXR_STEAMVR_BOOTSTRAP"})
                 if(envv.ContainsKey(k))envv.Remove(k);
             envv["XR_RUNTIME_JSON"]=r.runtime_manifest??env.OpenXrManifest;envv["GTAVXR_USER_PLAY"]="1";envv["GTAVXR_SESSION_DIR"]=native;
+            envv.Remove("GTAVXR_PUBLIC_CRASH_DUMPS");
+            if(EmbeddedRelease.HasSessionMinidump(v)){
+                envv["GTAVXR_PUBLIC_CRASH_DUMPS"]="1";
+                envv.Remove("RAGE_CRASHDUMP_DIR");
+                if(SessionDumps.Prepare(env.Dir("sessions"),r.id,native))envv["RAGE_CRASHDUMP_DIR"]=native;
+            }
             if(String.Equals(r.runtime_name,"SteamVR",StringComparison.OrdinalIgnoreCase))
                 envv["GTAVXR_STEAMVR_BOOTSTRAP"]="1";
             envv["GTAVXR_BRIDGE_PATH"]=Path.Combine(RuntimeDir(v),"gtavxr_native_openxr.dll");

@@ -11,6 +11,7 @@ enum GxButton
     GX_RCLICK = 32,
     GX_MENU = 64
 };
+enum { GX_INPUT_STEAMVR = 1, GX_INPUT_BOTH_CLICKS = 2 };
 #pragma pack(push, 8)
 struct GxInput
 {

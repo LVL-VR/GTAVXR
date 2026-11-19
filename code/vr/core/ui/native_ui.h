@@ -91,7 +91,8 @@ inline bool buttonsItem(const GxUiItem& r)
 }
 inline bool contentDrivenHud(unsigned id)
 {
-    return id == 1 || id == 10 || id == 11 || id == 12;
+    // The subtitle movie can draw text independently of the HUD active flag.
+    return id == 1 || id == 10 || id == 11 || id == 12 || id == 15;
 }
 inline bool cashNeedsDelivery(bool xr, bool force, bool acknowledged, bool active)
 {

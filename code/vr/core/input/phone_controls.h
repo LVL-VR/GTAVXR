@@ -2,7 +2,6 @@
 // Native phone app/script state remains authoritative. This policy owns only
 // Quest RIGHT inputs and emits semantic requests, never a second app system.
 #include "../xr/locomotion.h"
-#include "single_click_intent.h"
 namespace gx_phone
 {
 struct Output
@@ -18,7 +17,6 @@ struct Output
 class Ownership
 {
     bool pending_, draining_, wasNative_, entryNeutral_;
-    gx_character::SingleClickIntent clickIntent_;
     double requested_;
 
   public:
@@ -27,21 +25,20 @@ class Ownership
     {
         pending_ = draining_ = wasNative_ = entryNeutral_ = false;
         requested_ = 0;
-        clickIntent_.reset();
     }
     bool owned() const
     {
         return pending_ || wasNative_ || draining_;
     }
     Output update(const GxInput& i, double seconds, bool eligible, bool nativeOpen, bool nativeStowing,
-                  bool menu)
+                  bool menu, bool openRequest, unsigned openButton)
     {
         Output o;
-        const bool click = (i.buttons & GX_RCLICK) != 0;
+        const unsigned phoneButtons = GX_A | GX_B | GX_RCLICK | openButton;
         const bool stowing = nativeOpen && nativeStowing; // native flag may outlive the displayed phone
-        const bool neutral = !(i.buttons & (GX_A | GX_B | GX_RCLICK)) && fabs(i.stick[1][0]) < .25 &&
+        const bool neutral = !(i.buttons & phoneButtons) && fabs(i.stick[1][0]) < .25 &&
                              fabs(i.stick[1][1]) < .25 && i.trigger[1] < .15 && i.grip[1] < .15;
-        const bool navigationNeutral = !(i.buttons & (GX_A | GX_B | GX_RCLICK)) &&
+        const bool navigationNeutral = !(i.buttons & phoneButtons) &&
                                        fabs(i.stick[1][0]) < .25 && fabs(i.stick[1][1]) < .25;
         if (!eligible || !(i.active_hands & 2) || !_finite(seconds))
         {
@@ -70,12 +67,8 @@ class Ownership
         // takeout ONLY and must not emit removal flags or leak to gameplay while
         // already open/pending/stowing/draining. A fresh click after native close
         // and neutral release can reopen; holding R3 through stow cannot reopen.
-        // Release-only takeout allows either staggered both-stick-click order
-        // to become the special-ability/Dpad chord, with no arbitrary timeout.
-        // Native open/pending/stow and any menu/L3 involvement cancel the click.
-        const bool request = clickIntent_.update(click, menu || (i.buttons & (GX_LCLICK | GX_MENU)) != 0,
-                                                 !draining_ && !nativeOpen && !pending_);
-        if (request)
+        // A rebound takeout still enters the same native navigation and drain lifecycle.
+        if (openRequest && !menu && !draining_ && !nativeOpen && !pending_)
         {
             o.open = true;
             pending_ = true;
@@ -110,13 +103,13 @@ class Ownership
         }
         return o;
     }
-    static void filter(GxInput& input, bool owned)
+    static void filter(GxInput& input, bool owned, unsigned openButton = 0)
     {
         if (!owned)
             return;
-        input.buttons &= ~(GX_A | GX_B | GX_RCLICK);
+        input.buttons &= ~(GX_A | GX_B | GX_RCLICK | openButton);
         input.stick[1][0] = input.stick[1][1] = input.trigger[1] = input.grip[1] = 0;
-        // Left stick, buttons, trigger, grip and BOTH tracking poses untouched.
+        // Left stick, trigger, grip and both tracking poses are untouched.
     }
 };
 }

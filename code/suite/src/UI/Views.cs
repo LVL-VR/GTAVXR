@@ -181,7 +181,7 @@ namespace GtavxrSuite {
                 bool appInst=SelfInstall.RunningInstalled();
                 rows.Children.Add(Row(L.S("set.app"),U.Text(appInst?L.S("set.app.installed"):L.S("set.app.install.hint"),15,appInst?Theme.Mist:Theme.Text),
                     appInst?null:U.Btn(L.S("set.app.install"),"Btn",()=>shell.RunTask(L.S("set.app.install"),()=>{SelfInstall.Install();return L.S("set.app.done");}))));
-                rows.Children.Add(Row(L.S("set.update"),U.Text("GitHub Releases",15,Theme.Mist),
+                rows.Children.Add(Row(L.S("set.update"),U.Text(L.S("set.update.hint"),15,Theme.Mist),
                     U.Btn(L.S("set.update.check"),"Btn",shell.CheckPublicUpdate)));
                 rows.Children.Add(Row(L.S("set.update.legacy"),U.Text(L.S("set.update.portable.hint"),15,Theme.Mist),
                     U.Row(8,U.Btn(L.S("set.update.legacy.replace"),"Btn",shell.ReplaceOldPortable),
@@ -297,17 +297,20 @@ namespace GtavxrSuite {
             }
         }
         void Repair(){shell.RunTask(L.S("set.repair"),()=>{
-            var layer=new GameLayer(s.Env);
-            var installed=layer.State();
-            if(installed==null)return L.S("set.repair.ok");
-            using(var library=GameScope.Acquire(s.Env.DataRoot))
-            using(var game=GameScope.Acquire(installed.game_dir)){
-                if(s.Session.GameRunning())throw new InvalidOperationException("GAME_RUNNING");
-                if(layer.Pending||s.Session.Unfinished().Count!=0)throw new InvalidOperationException("RECOVERY_REQUIRED");
-                var bad=layer.Repair();
-                return bad.Count==0?L.S("set.repair.ok"):L.F("set.repair.bad",bad.Count);
-            }
+            // Game folder AND the runtime files in the Suite library; success only when every file verifies.
+            var r=s.Session.CheckFiles(System.Threading.CancellationToken.None);
+            if(r.Complete)return r.repaired.Count==0?L.S("set.repair.ok"):L.F("set.repair.bad",r.repaired.Count);
+            throw new IOException(RepairDetails(r));
         });}
+        internal static string RepairDetails(RepairReport r){
+            var lines=new System.Collections.Generic.List<string>();
+            if(r.repaired.Count!=0)lines.Add(L.F("set.repair.bad",r.repaired.Count));
+            if(r.busy.Count!=0)lines.Add(L.S("set.repair.busy")+"\n  "+String.Join("\n  ",r.busy));
+            if(r.deferred.Count!=0)lines.Add(L.S("set.repair.deferred")+"\n  "+String.Join("\n  ",r.deferred));
+            if(r.unavailable.Count!=0)lines.Add(L.S("set.repair.missing")+"\n  "+String.Join("\n  ",r.unavailable));
+            if(r.aside.Count!=0)lines.Add(L.S("set.repair.aside")+"\n  "+String.Join("\n  ",r.aside));
+            return String.Join("\n\n",lines);
+        }
         void Uninstall(){shell.Confirm(L.S("set.uninstall"),L.S("set.uninstall.q"),L.S("set.uninstall"),()=>shell.RunTask(L.S("set.uninstall"),()=>{
             var layer=new GameLayer(s.Env);
             var installed=layer.State();

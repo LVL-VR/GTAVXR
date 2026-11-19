@@ -8,7 +8,7 @@ namespace GtavxrSuite {
     internal static class CompleteRemoval {
         static readonly string[] RootDirectories={"blobs","content-build","content-src","dlss","embedded","game","mods",
             "profiles","quarantine","recycle","runtime","scratch","sessions","reports","versions","ofxr"};
-        static readonly string[] RootFiles={"settings.json","embedded-install.lock","release-migration.json"};
+        static readonly string[] RootFiles={"settings.json","embedded-install.lock",ReleaseMigration.JournalName,ReleaseMigration.HandoverName};
 
         internal static List<string> Libraries(Env env,DataLocation location) {
             var roots=(env.ManagedLocation?location.KnownLibraries():new[]{env.DataRoot})
@@ -59,7 +59,7 @@ namespace GtavxrSuite {
             var installed=SelfInstall.InstalledExe();
             if(!Equal(installed,Program.SelfPath)&&File.Exists(installed)){
                 var running=new FileInfo(Program.SelfPath);
-                if(!SelfInstall.IsPublic100(installed))
+                if(!SelfInstall.IsPreviousLauncher(installed))
                     SafeFs.AssertFile(installed,SafeFs.Hash(running.FullName),running.Length);
                 launchers.Add(installed);
             }
@@ -84,7 +84,7 @@ namespace GtavxrSuite {
                 var session=new PlaySession(library);
                 if(session.GameRunning())throw new InvalidOperationException("GAME_RUNNING");
                 if(new ReleaseMigration(library).Pending)
-                    throw new InvalidOperationException("An update is unfinished. Select Update GTAVXR to resume.");
+                    throw new InvalidOperationException("REMOVE_UPDATE_PENDING");
                 if(session.Unfinished().Count!=0)throw new InvalidOperationException("RECOVERY_REQUIRED");
                 CheckRetainedPlayerFiles(library);
             }
@@ -208,7 +208,7 @@ namespace GtavxrSuite {
             // Remove the launcher that owns the current UI last, so a locked file can be retried from it.
             SafeFs.AssertFile(target,hash,bytes);
             if(!Equal(target,installed)&&File.Exists(installed)){
-                if(!SelfInstall.IsPublic100(installed))SafeFs.AssertFile(installed,hash,bytes);
+                if(!SelfInstall.IsPreviousLauncher(installed))SafeFs.AssertFile(installed,hash,bytes);
                 SafeFs.DeleteName(installed);
                 if(File.Exists(installed))throw new IOException("Could not remove: "+installed);
             }
@@ -227,7 +227,7 @@ namespace GtavxrSuite {
                 "try{[IO.File]::Delete($helper)}catch{Start-Sleep -Milliseconds 250}}; "+
                 "if(![IO.File]::Exists($helper)){[IO.Directory]::Delete($dir)}";
             var info=new ProcessStartInfo(Path.Combine(Environment.SystemDirectory,@"WindowsPowerShell\v1.0\powershell.exe"),
-                "-NoProfile -NonInteractive -EncodedCommand "+Convert.ToBase64String(System.Text.Encoding.Unicode.GetBytes(cleanup))){
+                ProcessText.Join(new[]{"-NoProfile","-NonInteractive","-Command",cleanup})){
                 UseShellExecute=false,CreateNoWindow=true};
             info.EnvironmentVariables["GTAVXR_REMOVE_HELPER"]=helper;
             info.EnvironmentVariables["GTAVXR_REMOVE_DIR"]=stage;

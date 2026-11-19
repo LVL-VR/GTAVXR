@@ -16,20 +16,15 @@ bool hand_context_layer(XrCompositionLayerQuad&q,unsigned hand){
     // New route semantics require a qualified owner+hand identity. Old movie or
     // generic HUD IDs can never become a left/right local contextual card.
     if(!gx_native_ui::handItem(r)||r.width>uiMaxWidth||r.height>uiMaxHeight)return false;
-    auto&target=handUiPanels[hand];
-    if(target.width!=r.width||target.height!=r.height){close_ui_eye(target.eye);target.width=r.width;target.height=r.height;}
-    if(!target.eye.swap)create_ui_eye(target.eye,r.width,r.height);
-    auto*texture=acquire_ui_eye(target.eye,r.width,r.height);
-    demand(texture!=source->texture.Get(),"UI_HAND_ALIAS");perf147.gpu(context.Get(),"hand_copy",-1,int(hand),[&](){swap_copy(texture,source->texture.Get());});release_ui_eye(target.eye);
+    if(!publish_ui_panel(q.subImage,handUiPanels[hand],*source,512,128,"hand_copy"))return false;
     const GxPose p=gx_hand_display::nearHand(hand,hudGrip[hand],head);
     q.space=space;q.eyeVisibility=XR_EYE_VISIBILITY_BOTH;
     q.layerFlags=XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT|XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
-    q.subImage.swapchain=target.eye.swap;q.subImage.imageRect.extent={int(r.width),int(r.height)};
     q.pose.orientation={float(p.qx),float(p.qy),float(p.qz),float(p.qw)};
     q.pose.position={float(p.x),float(p.y),float(p.z)};q.size={.24f,.24f*float(r.height)/r.width};
     if(frame<=5||frame%120==0)log("HAND_UI frame="+std::to_string(frame)+" generation="+std::to_string(generation)+
         " hand="+std::to_string(hand)+" id="+std::to_string(r.id)+" route="+std::to_string(r.route));
     return true;
 }
-void close_hand_contexts(){for(auto&p:handUiPanels){close_ui_eye(p.eye);p.width=p.height=0;}}
+void close_hand_contexts(){for(auto& p:handUiPanels)close_ui_panel(p);}
 

@@ -36,16 +36,23 @@ namespace GtavxrSuite {
         const string Resource = "GtavxrSuite.Distribution.Bundle";
         const int MiB = 1024 * 1024;
         const string Exe = "GTAVXR_SourceBaseline.exe";
-        const string ReleaseName = "embedded-gtavxr-1-0-2";
+        const string ReleaseName = "embedded-gtavxr-1-0-5";
         const string BaseHash = "677E4E355CFBDB13273B1D992407E3C261B3A108DC4DD5C8A0C4C1DA651802E5";
-        const string TargetHash = "E721EBFFD4A216E969EB8AB2E33C9BF5A6C8E44CD50168400FEC52D109BA4218";
+        const string TargetHash = "A6776E715859B9299A2951018FE639198FA7B7CCEA5322985B6A06C99ABE390D";
         const string CodecHash = "8F07E1112ED283E5CD2798833E9A3C32D8961381BC36DA04AF57A1B0CA9BD40B";
         const string Table = "scripthost/ScriptHookVDotNet.gtavxr-memory.txt";
-        internal const string VersionId = "gtavxr-1-0-2";
+        internal const string VersionId = "gtavxr-1-0-5";
+        internal const string Release104Id = "gtavxr-1-0-4";
+        internal const string Release103Id = "gtavxr-1-0-3";
+        internal const string Release102Id = "gtavxr-1-0-2";
         internal const string PreviousVersionId = "gtavxr-1-0-0";
 
         internal static bool HasSessionFixes(string versionId){
-            return versionId==VersionId||versionId=="gtavxr-1-0-1";
+            return versionId==VersionId||versionId==Release104Id||versionId==Release103Id||versionId==Release102Id||versionId=="gtavxr-1-0-1";
+        }
+        // Earlier embedded releases this one recognizes (published or local candidates), for migration.
+        internal static bool KnownEarlier(string versionId){
+            return versionId==PreviousVersionId||versionId=="gtavxr-1-0-1"||versionId==Release102Id||versionId==Release103Id||versionId==Release104Id;
         }
         internal static bool UsesStoryData(string versionId){
             return HasSessionFixes(versionId)||versionId==PreviousVersionId;
@@ -53,11 +60,40 @@ namespace GtavxrSuite {
 
         static readonly HashSet<string> Runtime = new HashSet<string>(StringComparer.Ordinal) {
             "GTAVXRHost.dll", "gtavxr_native_openxr.dll", "gtavxr_trainer.dll", "openxr_loader.dll",
-            "nvngx.dll_gtavxr.dll", "nvngx.dll_gtavxr_sr.dll", "tools/native_fault_monitor.exe",
+            "nvngx.dll_gtavxr.dll", "nvngx.dll_gtavxr_sr.dll",
             "scripthost/ScriptHookVDotNet.asi", "scripthost/ScriptHookVDotNet2.dll", "scripthost/ScriptHookVDotNet3.dll",
             "scripthost/ScriptHookVDotNet.ini", "scripthost/gtavxr-host-features.txt", Table,
             "scripthost/ScriptHookVDotNet-LICENSE.txt", "scripthost/ScriptHookVDotNet-THIRD-PARTY-NOTICES.md"
         };
+
+        // Public releases carry only runtime files used in public sessions.
+        internal static readonly string[] InstalledRuntime = Runtime.OrderBy(path => path, StringComparer.Ordinal).ToArray();
+
+        internal static bool HasSessionMinidump(VersionManifest version) {
+            return version.embedded_release&&version.id==VersionId&&version.files!=null&&
+                version.files.Any(a=>a!=null&&a.path==Exe&&a.sha256==TargetHash);
+        }
+
+        // What an embedded version record lacks against its mandatory runtime; empty when complete. This release requires
+        // every InstalledRuntime name; an earlier embedded release at least its bridge (and its loader in suite mode). A null
+        // list, an entry without path/hash/size and a repeated path are gaps too.
+        internal static List<string> RuntimeGaps(VersionManifest version) {
+            var gaps = new List<string>();
+            if (version == null || !version.embedded_release) return gaps;
+            if (version.runtime == null) gaps.Add("(runtime list missing)");
+            var listed = version.runtime ?? new List<FileRef>();
+            if (listed.Any(f => f == null || String.IsNullOrEmpty(f.path) || !SafeFs.IsHash(f.sha256) || f.bytes < 0))
+                gaps.Add("(entry without path, hash or size)");
+            var names = listed.Where(f => f != null && !String.IsNullOrEmpty(f.path)).Select(f => f.path).ToList();
+            foreach (var twice in names.GroupBy(n => n, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1))
+                gaps.Add(twice.Key + " (listed twice)");
+            IEnumerable<string> required = version.id == VersionId ? InstalledRuntime
+                : version.launch != null && version.launch.session_mode == "suite"
+                    ? new[] { "gtavxr_native_openxr.dll", "openxr_loader.dll" } : new[] { "gtavxr_native_openxr.dll" };
+            var have = new HashSet<string>(names, StringComparer.OrdinalIgnoreCase);
+            gaps.AddRange(required.Where(name => !have.Contains(name)));
+            return gaps;
+        }
 
         public static bool Available {
             get { return Assembly.GetExecutingAssembly().GetManifestResourceInfo(Resource) != null; }
@@ -135,6 +171,8 @@ namespace GtavxrSuite {
             if (entry.kind == "metadata") return entry.path == "suite-launch.json" || entry.path == "trial-profile/vr-settings.ini";
             if (entry.kind == "runtime") return Runtime.Contains(entry.path);
             if (entry.kind != "payload") return false;
+            // Shader compiler configuration is a build input, not a game asset.
+            if (entry.path.StartsWith("common/shaders/fx_max/", StringComparison.OrdinalIgnoreCase)) return false;
             if (entry.path == "gtavxr_mvga147/platform/textures/graphics.ytd" ||
                 entry.path == "gtavxr_mvga147/platform/textures/graphics_pc.ytd" ||
                 entry.path == "gtavxr_mvga147/platform/textures/fxweather.ytd") return true;
@@ -148,10 +186,9 @@ namespace GtavxrSuite {
 
         static bool ShaderDeltaAllowed(EmbeddedEntry entry) {
             return entry.kind == "payload" &&
-                   (((entry.path.StartsWith("common/shaders/win32_40/", StringComparison.Ordinal) ||
-                      entry.path.StartsWith("common/shaders/win32_50/", StringComparison.Ordinal)) &&
-                     Path.GetExtension(entry.path) == ".fxc") ||
-                    (entry.path == "common/shaders/fx_max/shaderbuild.fx" && entry.retail_archive == null));
+                   (entry.path.StartsWith("common/shaders/win32_40/", StringComparison.Ordinal) ||
+                    entry.path.StartsWith("common/shaders/win32_50/", StringComparison.Ordinal)) &&
+                   Path.GetExtension(entry.path) == ".fxc";
         }
 
         static byte[] ReadMember(ZipArchiveEntry member, EmbeddedIdentity identity, CancellationToken cancel) {
@@ -232,7 +269,7 @@ namespace GtavxrSuite {
                 Require(memberCount == zipEntries.Count, "BUNDLE_MANIFEST");
                 Require(total <= 320L * MiB, "BUNDLE_EXPANSION");
                 if (!fixture) Require(Runtime.All(names.Contains) && names.Contains("trial-profile/vr-settings.ini") &&
-                                      manifest.entries.Count(x => x.kind == "payload") == 1102, "BUNDLE_REQUIRED_FILES");
+                                      manifest.entries.Count(x => x.kind == "payload") == 1101, "BUNDLE_REQUIRED_FILES");
                 var patch = manifest.entries.SingleOrDefault(x => x.kind == "patch");
                 var codec = manifest.entries.SingleOrDefault(x => x.kind == "codec");
                 Require(patch != null && codec != null && codec.bytes <= 4 * MiB && names.Contains("suite-launch.json"), "BUNDLE_REQUIRED_FILES");
@@ -256,8 +293,8 @@ namespace GtavxrSuite {
                     var path = SafeFs.Under(destination, entry.path);
                     byte[] bytes;
                     if (entry.shader_patch != null) {
-                        byte[] basis = Array.Empty<byte>();
-                        if (entry.retail_base != null) basis=ReadRetailMember(retail,entry);
+                        // The manifest also carries a few standalone compiled debug and VR shaders.
+                        byte[] basis = entry.retail_base==null?Array.Empty<byte>():ReadRetailMember(retail,entry);
                         var frame = ReadMember(zipEntries[ShaderPatchName(entry.path)], entry.shader_patch, cancel);
                         bytes = ZstdPatch.Apply(codecPath, basis, frame, (int)entry.bytes);
                         Require(Hash(bytes) == entry.sha256, "SHADER_TARGET_MISMATCH:" + entry.path);

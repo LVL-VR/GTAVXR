@@ -1,8 +1,10 @@
-# GTAVXR 1.0.2 compatibility
+# GTAVXR compatibility
 
-GTAVXR 1.0.2 uses **GTA V Legacy 1.0.3889.0** as its base. The Suite checks the files in your selected installation before applying the patch.
+GTAVXR uses **GTA V Legacy 1.0.3889.0** as its base. The Suite checks the files in your selected installation before applying the patch.
 
 ## Store support
+
+The table records verified setups from the 1.0 and 1.0.2 releases. Version 1.0.5 was checked on Steam Legacy with Virtual Desktop XR through a Story Mode session and normal shutdown. Headset, controller, runtime and graphics options affect the result on other setups.
 
 | Store | Setup | What has been confirmed |
 | --- | --- | --- |
@@ -26,7 +28,11 @@ For Quest over Virtual Desktop, start with **VDXR**. SteamVR is supported, inclu
 | **Mods and Script Host** | Inspects the mod package, requirements, and scripting APIs. | The mod loads and its actions or content work in Story Mode. |
 | **DLSS, Neural Rendering, and OFXR** | Detects model files or the appropriate layer and offers fallbacks when a component is missing. | The selected mode initializes and runs with your GPU and runtime. |
 
-When SteamVR opens the OpenXR session and both stick clicks are available, press and release **L3 + R3** with the sticks centered to open the GTAVXR menu. Press **F9** if your controller profile lacks one of the clicks. [VR controls](VR_CONTROLS.md)
+## Controller profiles
+
+GTAVXR suggests OpenXR bindings for Touch, Valve Index, Vive wands and the Khronos Simple Controller. The runtime decides which profile and inputs are active. Touch is the reference layout for the controls guide. Index maps the left-hand face buttons to X/Y and the right-hand face buttons to A/B. Vive wands use their trackpads for stick movement and the default wand mapping provides only the left stick click. The simple profile offers basic trigger and menu inputs.
+
+With SteamVR, use both stick clicks for the GTAVXR menu when the active controller profile provides them. Otherwise, use the configured keyboard shortcut, **F9** by default. Outside SteamVR, the two-click recenter also requires both stick clicks. Use **Recenter** in the VR menu when one is missing. A suggested profile does not indicate that every controller, headset or gesture has been tested. [Runtime shortcuts](VR_CONTROLS.md#open-the-vr-menu-and-recenter)
 
 If your setup has a problem, record the store, version, GPU, headset, connection, and runtime you used. [Troubleshooting](TROUBLESHOOTING.md)
 

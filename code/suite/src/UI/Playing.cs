@@ -10,8 +10,10 @@ namespace GtavxrSuite {
         public readonly Grid Root=new Grid();
         public Action OnAbort;
         public Func<bool> OnClose;   // "Cerrar GTA" (clean close request); runs off the UI thread
+        public Func<OfxrState> OfxrRead;   // OFXR's state for the running game; read off the UI thread while playing
         readonly ContentControl stateRow=new ContentControl(),clockRow=new ContentControl(),abortRow=new ContentControl();
         readonly TextBlock hint;readonly ProgressBar bar;readonly TextBlock count;readonly bool test;
+        readonly TextBlock ofxr;System.Windows.Threading.DispatcherTimer ofxrTimer;int ofxrReading;
         public PlayingPanel(Profile p,VersionManifest v){
             test=p.test;
             var col=new StackPanel{HorizontalAlignment=HorizontalAlignment.Center,VerticalAlignment=VerticalAlignment.Center,Width=780};
@@ -30,6 +32,8 @@ namespace GtavxrSuite {
             hint=U.Text("",16,Theme.Text);line.Children.Add(hint);
             count=U.Text("",14,Theme.Mist);count.FontFamily=Theme.Mono;DockPanel.SetDock(count,Dock.Right);line.Children.Add(count);
             col.Children.Add(line);
+            ofxr=U.Text("",13,Theme.Mist);ofxr.TextWrapping=TextWrapping.Wrap;ofxr.Margin=new Thickness(0,10,0,0);ofxr.Visibility=Visibility.Collapsed;
+            col.Children.Add(ofxr);
             var bottom=new DockPanel{LastChildFill=false,Margin=new Thickness(0,26,0,0)};
             bottom.Children.Add(clockRow);
             DockPanel.SetDock(abortRow,Dock.Right);abortRow.VerticalAlignment=VerticalAlignment.Center;bottom.Children.Add(abortRow);
@@ -50,8 +54,42 @@ namespace GtavxrSuite {
             bar.IsIndeterminate=false;bar.Value=1;count.Text="";
             SetState(L.S(test?"run.playing.test":"run.playing.hint"),L.S("run.playing"),true);
             AbortButton(false);
+            StartOfxr();
         }
-        public void Landing(){abortRow.Content=null;}
+        public void Landing(){abortRow.Content=null;StopOfxr();}
+        public void Stop(){StopOfxr();}
+        // OFXR line while the game runs: read every 2 s on a worker (files, registry, processes), never two reads at once,
+        // and only the text is set on the UI thread. Hidden when OFXR is not installed.
+        void StartOfxr(){
+            if(OfxrRead==null||ofxrTimer!=null)return;
+            ofxrTimer=new System.Windows.Threading.DispatcherTimer{Interval=TimeSpan.FromSeconds(2)};
+            ofxrTimer.Tick+=(o,e)=>ReadOfxr();ofxrTimer.Start();ReadOfxr();
+        }
+        void StopOfxr(){if(ofxrTimer!=null){ofxrTimer.Stop();ofxrTimer=null;}ofxr.Visibility=Visibility.Collapsed;}
+        void ReadOfxr(){
+            if(System.Threading.Interlocked.Exchange(ref ofxrReading,1)==1)return;
+            var read=OfxrRead;var ui=Root.Dispatcher;
+            System.Threading.Tasks.Task.Factory.StartNew(()=>{
+                OfxrState state;try{state=read();}catch(Exception){state=null;}
+                ui.BeginInvoke((Action)(()=>{
+                    System.Threading.Interlocked.Exchange(ref ofxrReading,0);
+                    if(ofxrTimer==null)return;
+                    string text=OfxrLine(state);
+                    ofxr.Text=text??"";ofxr.Visibility=text==null?Visibility.Collapsed:Visibility.Visible;
+                }));
+            });
+        }
+        // The same status, reason and measures the Graphics view shows for the running game; null without OFXR.
+        public static string OfxrLine(OfxrState of){
+            if(of==null||!of.layer)return null;
+            string text=L.F("run.ofxr",L.S("ofxr."+(of.status??"detected")));
+            if(of.status=="insufficient"&&of.reason!=null)text+=" · "+L.S("ofxr.reason."+of.reason);
+            if(of.status=="active"||of.status=="unconfirmed"||of.status=="paused"||of.status=="generating"){
+                Func<double?,string> n=x=>x==null?L.S("ofxr.unmeasured"):x.Value.ToString("0.#",System.Globalization.CultureInfo.CurrentCulture);
+                text+=" · "+L.F("gfx.ofxr.measures",n(of.app_fps),n(of.output_fps),n(of.multiplier));
+            }
+            return text;
+        }
         void AbortButton(bool confirm){
             if(OnAbort==null)return;
             if(!confirm){

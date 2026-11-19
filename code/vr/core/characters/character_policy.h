@@ -67,7 +67,7 @@ class Gestures
         leftWas_ = holdArmed_ = holdFired_ = false;
         leftDownAt_ = 0;
     }
-    Emissions update(const GxInput& i, bool eligible, bool seated = false, uint64_t nowMs = 0)
+    Emissions update(const GxInput& i, bool eligible, bool seated = false, uint64_t nowMs = 0, bool legacyActions = true)
     {
         Emissions out;
         const unsigned clicks = i.buttons & (GX_LCLICK | GX_RCLICK);
@@ -103,34 +103,37 @@ class Gestures
                 barrier_ = false;
             return out;
         }
-        const bool leftDown = (clicks & GX_LCLICK) != 0;
-        const bool leftCancel = (i.buttons & (GX_RCLICK | GX_A | GX_B | GX_X | GX_Y | GX_MENU)) != 0 || held_;
-        const bool rise = !repeated && leftDown && !leftWas_;
-        if (!repeated)
-            leftWas_ = leftDown;
-        if (leftCancel || seated || !leftDown)
-            holdArmed_ = false;
-        if (holdArmed_ && nowMs >= leftDownAt_ && nowMs - leftDownAt_ >= HOLD_MS)
+        if (legacyActions)
         {
-            out.cover = true;
-            holdFired_ = true;
-            holdArmed_ = false;
+            const bool leftDown = (clicks & GX_LCLICK) != 0;
+            const bool leftCancel = (i.buttons & (GX_RCLICK | GX_A | GX_B | GX_X | GX_Y | GX_MENU)) != 0 || held_;
+            const bool rise = !repeated && leftDown && !leftWas_;
+            if (!repeated)
+                leftWas_ = leftDown;
+            if (leftCancel || seated || !leftDown)
+                holdArmed_ = false;
+            if (holdArmed_ && nowMs >= leftDownAt_ && nowMs - leftDownAt_ >= HOLD_MS)
+            {
+                out.cover = true;
+                holdFired_ = true;
+                holdArmed_ = false;
+            }
+            out.consumeLeft = !seated && (leftDown || leftIntent_.pending());
+            const DoubleClickIntent::Result intent =
+                leftIntent_.update(leftDown, leftCancel || holdFired_, true, nowMs, !repeated);
+            if (rise)
+            {
+                holdArmed_ = !seated && !leftCancel && !intent.doublePress && !intent.suppress;
+                leftDownAt_ = nowMs;
+            }
+            if (!repeated && !leftDown)
+                holdFired_ = false;
+            out.special = intent.doublePress;
+            out.stealth = intent.single && !seated;
+            // First seated L3 retains its native held horn/context. Consume the
+            // second rising edge only when it is the deliberate ability request.
+            out.consumeLeft = out.consumeLeft || out.special || intent.suppress;
         }
-        out.consumeLeft = !seated && (leftDown || leftIntent_.pending());
-        const DoubleClickIntent::Result intent =
-            leftIntent_.update(leftDown, leftCancel || holdFired_, true, nowMs, !repeated);
-        if (rise)
-        {
-            holdArmed_ = !seated && !leftCancel && !intent.doublePress && !intent.suppress;
-            leftDownAt_ = nowMs;
-        }
-        if (!repeated && !leftDown)
-            holdFired_ = false;
-        out.special = intent.doublePress;
-        out.stealth = intent.single && !seated;
-        // First seated L3 retains its native held horn/context. Consume the
-        // second rising edge only when it is the deliberate ability request.
-        out.consumeLeft = out.consumeLeft || out.special || intent.suppress;
         if (repeated)
         {
             out.reserveClicks = held_;

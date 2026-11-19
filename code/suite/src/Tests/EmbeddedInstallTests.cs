@@ -242,13 +242,13 @@ namespace GtavxrSuite {
                 }, CancellationToken.None),"FIXTURE_INTERRUPTED_FIRST_INSTALL");
                 Check(layer.Pending && File.Exists(newExe),"first installation interrupted after writing game files");
                 Check(new PlaySession(env).Recover()=="OK" && !layer.Pending,"recover first install");
-                Check(layer.State().files.Count==1103,"recovered full first installation");
+                Check(layer.State().files.Count==1102,"recovered full first installation");
                 VerifyFiles(env.GameDir,layer.State().files);
                 passed.Add("fresh installation recovers the complete base from the durable journal");
             }
             string profileId=session.InstallEmbedded(null,null,CancellationToken.None);
             var version=library.Version(EmbeddedRelease.VersionId);
-            Check(version.embedded_release && layer.State().files.Count==1103 && version.runtime.Count==15,"full base and runtime");
+            Check(version.embedded_release && layer.State().files.Count==1102 && version.runtime.Count==EmbeddedRelease.InstalledRuntime.Length,"full base and runtime");
             var targetHash=version.files.Single(f=>f.path==version.launch.exe).sha256;
             Check(SafeFs.Hash(newExe)==targetHash,"installed target identity");
             string runtime=SafeFs.Under(env.DataRoot,"runtime/"+version.id);
@@ -336,7 +336,7 @@ namespace GtavxrSuite {
                     throw new IOException("FIXTURE_DO_NOT_START_GAME");
                 };
                 Expect<IOException>(()=>session.Play(alternate.id,null),"FIXTURE_DO_NOT_START_GAME");
-                Check(sawLaunch && layer.State().files.Count==1103 && File.GetLastWriteTimeUtc(newExe)==executableWrite,
+                Check(sawLaunch && layer.State().files.Count==1102 && File.GetLastWriteTimeUtc(newExe)==executableWrite,
                       "profile switch removes only optional files and never reapplies the executable");
                 passed.Add("classic profile switching works through Play without rerunning delta installation");
                 var host=version.runtime.Single(f=>f.path=="GTAVXRHost.dll");
@@ -471,6 +471,17 @@ namespace GtavxrSuite {
             catch(OptionalComponentException error){choice=error;}
             Check(choice!=null&&choice.Message=="OFXR_NEURAL_ALREADY_ACTIVE"&&choice.Retry.GraphicsFallback=="performance",
                   "known OFXR neural conflict permits SR only");
+            // Two profiles that could both be GTAVXR's: OFXR's NR cannot be known, so SR only is offered too, and
+            // neither profile is changed.
+            string second=SafeFs.Under(profileDir,Ofxr.GameExe+".exe.ini");
+            File.WriteAllText(second,"nr_enabled=off");
+            choice=null;
+            try { session.Play(profileId,null); }
+            catch(OptionalComponentException error){choice=error;}
+            Check(choice!=null&&choice.Message=="OFXR_NEURAL_UNKNOWN"&&choice.Retry.GraphicsFallback=="performance"&&
+                  File.ReadAllText(ofxr)=="nr_enabled=on"&&File.ReadAllText(second)=="nr_enabled=off",
+                  "an ambiguous OFXR profile permits SR only and changes nothing");
+            File.Delete(second);
             env.OfxrLayer=()=>null;
             File.WriteAllBytes(calibration,previous);
         }

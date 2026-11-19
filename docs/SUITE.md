@@ -2,7 +2,7 @@
 
 The **Play** screen lists your profiles. Select a profile to review its version, saves, mods, and settings before you launch. You can use another profile to try a different setup while keeping your main campaign.
 
-For first install, updating 1.0.0, or a clean reset, use the step-by-step guide. [Install, update, or remove GTAVXR](INSTALLATION.md)
+For a first install, an update from an earlier version, or a clean reset, use the step-by-step guide. [Install, update, or remove GTAVXR](INSTALLATION.md)
 
 ## Profile editor
 
@@ -29,10 +29,11 @@ From the main **Mods** screen, select **Try it** on a mod when that option is av
 | **Headset → Change** | Selects an OpenXR runtime. **Automatic** uses the active Windows runtime each time you click **Play**. You can also select a detected runtime or its installed JSON manifest. Reselect the runtime if it was moved or uninstalled. |
 | **DLSS** | Supply your own NVIDIA files compatible with your GPU. Set their location here, then choose the graphics preset and intensity in each profile. [DLSS setup](GRAPHICS.md#set-up-dlss-files) |
 | **OFXR (optional)** | Shows whether the layer is registered and lets you locate the OFXR tray app when available. [Set up OFXR](GRAPHICS.md#ofxr-bridge) |
-| **GTAVXR in the game** | Shows the installed version and offers **Check files** and **Uninstall**. [Maintenance](INSTALLATION.md#uninstall-from-the-game) |
-| **This app / Update** | Installs the Suite for its shortcuts, checks official GitHub Releases, and opens the available release for download. It offers to verify the downloaded EXE when a SHA-256 is available. |
+| **GTAVXR in the game** | Shows the installed version and offers **Check files** and **Uninstall**. **Check files** covers the game folder and the Suite's runtime files. [Repair](INSTALLATION.md#repair-and-recover) · [Uninstall](INSTALLATION.md#uninstall-from-the-game) |
+| **This app / Update** | Installs the Suite for its shortcuts, checks official GitHub Releases, and opens the available release for download. It offers to verify the downloaded EXE when a SHA-256 is available. The downloaded EXE then installs itself with **Update GTAVXR**. [Update and keep your data](INSTALLATION.md#update-and-keep-your-data) |
+| **Previous portable copy** | Selects an earlier standalone launcher that the Suite recognizes so you can replace or remove that copy. Use **Update GTAVXR** for the managed launcher used by your shortcuts. [Update and keep your data](INSTALLATION.md#update-and-keep-your-data) |
 | **SteamVR menu key** | Selects F7, F9, F11, or Off for the keyboard shortcut used when SteamVR is active. F9 is the default. |
-| **Remove GTAVXR completely** | Removes the identified Suite data and application. Review the paths and the list of VR data it will delete. |
+| **Remove GTAVXR completely** | Removes the identified Suite libraries, the installed launcher and its shortcuts. Review both lists before confirming. [What is kept](INSTALLATION.md#remove-gtavxr-completely) |
 | **Developer mode** | Shows additional development tools. The standard workflow covers installation, updates, and play. |
 
 ## Choose where the Suite stores its data

@@ -9,30 +9,47 @@ namespace GtavxrSuite {
     // The developer-only channel is separate from public release discovery.
     public static class SelfInstall {
         const string Public100Hash="ABB7544718CC7D33CDA7891AF6B81654615D992D924CB55D935B5D5613132613";
+        const string Public102Hash="B6E996BBBB64F454227B33B04C7675D634324AE95DC702C973FCADD040AFC013";
+        const string HudCandidate103Hash="83A8FFB825727CAF6C6990C53AA23A34A18A7CEAAFC548F291976CE8BDAAC08E";
+        const string Candidate103Hash="FFF9568A6C91988311BD43787C0D77CB5DD8555E0168ACF0BE0AAA19F4A0308E";
+        const string OriginalCandidate104Hash="CBE42CB95692DBF16AC53F6BEF8C1FF13DB59A2C5FD99AC725B32B4EC1A9F333";
+        const string CorrectedCandidate104Hash="0B9AA38383D237F19D9DCC8EE5FD4E33D31CAED96A9F5004EF8684707DBB9C49";
+        const string FixCandidate104Hash="CE8C4E5C52A4789BE5444D3C27D6A6E3A1805C89E683F7D33335A75C68325D50";
+        const string FixV2Candidate104Hash="3B16466FD31E34669593259995AA24F3CA1CEF8C4E7F598B04240405BA8D132E";
         public static string InstallDir(){return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),"Programs","GTAVXR");}
         public static string InstalledExe(){return Path.Combine(InstallDir(),"GTAVXR.exe");}
         public static bool RunningInstalled(){return String.Equals(Path.GetFullPath(Program.SelfPath),Path.GetFullPath(InstalledExe()),StringComparison.OrdinalIgnoreCase);}
         public static bool Installed(){return File.Exists(InstalledExe());}
 
-        internal static bool IsPublic100(string path){
+        internal static bool IsPreviousLauncher(string path){
             SafeFs.NoLinks(path);
             var file=new FileInfo(path);
-            return file.Exists&&file.Length==25437184&&SafeFs.Hash(path)==Public100Hash;
+            if(!file.Exists)return false;
+            if(file.Length==25687040)return SafeFs.Hash(path)=="295286884E5D7053AF01BE8D1A745CA8E2FA905CE79EE7773F3D69753C561C82";
+            if(file.Length==25437184)return SafeFs.Hash(path)==Public100Hash;
+            if(file.Length==25580032)return SafeFs.Hash(path)==Public102Hash;
+            if(file.Length==25581568)return SafeFs.Hash(path)==HudCandidate103Hash;
+            if(file.Length==25585664)return SafeFs.Hash(path)==Candidate103Hash;
+            if(file.Length==25603072)return SafeFs.Hash(path)==OriginalCandidate104Hash;
+            if(file.Length==25604096)return SafeFs.Hash(path)==CorrectedCandidate104Hash;
+            if(file.Length==25607168)return SafeFs.Hash(path)==FixCandidate104Hash;
+            if(file.Length==25696768)return SafeFs.Hash(path)=="3FA7FB3B299797F2558636E9773C8FA14532C42BD8DC482D057B8FFB593EC8FD";
+            return file.Length==25612288&&SafeFs.Hash(path)==FixV2Candidate104Hash;
         }
 
         internal static void RefreshInstalledLauncher(){
-            if(!RunningInstalled()&&IsPublic100(InstalledExe()))ReplacePublic100(InstalledExe());
+            if(!RunningInstalled()&&IsPreviousLauncher(InstalledExe()))ReplacePreviousLauncher(InstalledExe());
         }
 
-        internal static void ReplacePublic100(string path){
+        internal static void ReplacePreviousLauncher(string path){
             path=Path.GetFullPath(path);
-            if(!IsPublic100(path))throw new InvalidDataException("The selected file is not the original GTAVXR 1.0.0 launcher.");
+            if(!IsPreviousLauncher(path))throw new InvalidDataException("Select a recognized earlier GTAVXR launcher.");
             var current=new FileInfo(Program.SelfPath);
             string hash=SafeFs.Hash(current.FullName);
             string temporary=Path.Combine(Path.GetDirectoryName(path),".gtavxr-update-"+Ids.New()+".tmp");
             try{
                 SafeFs.CopyNew(current.FullName,temporary,hash,current.Length);
-                if(!IsPublic100(path))throw new IOException("The selected launcher changed: "+path);
+                if(!IsPreviousLauncher(path))throw new IOException("The selected launcher changed: "+path);
                 File.Replace(temporary,path,null);
                 SafeFs.AssertFile(path,hash,current.Length);
             }finally{
@@ -40,8 +57,8 @@ namespace GtavxrSuite {
             }
         }
 
-        internal static void RemovePublic100(string path){
-            if(!IsPublic100(path))throw new InvalidDataException("The selected file is not the original GTAVXR 1.0.0 launcher.");
+        internal static void RemovePreviousLauncher(string path){
+            if(!IsPreviousLauncher(path))throw new InvalidDataException("Select a recognized earlier GTAVXR launcher.");
             SafeFs.DeleteName(path);
             if(File.Exists(path))throw new IOException("Could not remove: "+path);
         }

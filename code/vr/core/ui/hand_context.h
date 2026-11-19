@@ -64,6 +64,7 @@ inline bool knownAction(Owner owner, Action action, Input input, unsigned hand)
     return (owner == PHONE && hand == 1 && action == PHONE_NAVIGATE && input == RIGHT_A_B_STICK) ||
            (owner == SUPPORT && hand == 0 && action == RELEASE_SUPPORT && input == LEFT_TRIGGER_RELEASE) ||
            (owner == SUPPORT && hand == 1 && action == RELEASE_SUPPORT && input == RIGHT_TRIGGER_RELEASE) ||
+           (owner == SUPPORT && action == RELEASE_SUPPORT && input == HAND_GRIP_RELEASE) ||
            (owner == VEHICLE && action == RELEASE_CONTROL && input == HAND_GRIP_RELEASE) ||
            (owner == FREE && hand == 0 && action == SPECIAL_ABILITY && input == DOUBLE_LCLICK) ||
            (owner == PHYSICS && action == RELEASE && input == HAND_GRIP_RELEASE) ||

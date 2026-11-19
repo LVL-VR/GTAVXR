@@ -19,6 +19,15 @@ inline Intent intent(const GxInput& i, bool eligible, bool throttleOwned, bool a
     o.cycle = armed && (i.buttons & GX_X) != 0;
     return o;
 }
+inline Intent boundIntent(const GxInput& input, bool throttleOwned, bool armed, bool fire, bool cycle)
+{
+    Intent out;
+    out.reserveTrigger = throttleOwned;
+    out.fire = armed && (throttleOwned ? input.trigger[1] >= .55f : fire);
+    out.cycle = armed && cycle;
+    return out;
+}
+
 class TriggerHandoff
 {
     bool initialized, prior, draining;

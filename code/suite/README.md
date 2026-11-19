@@ -1,6 +1,6 @@
 # GTAVXR Suite development sources
 
-These sources include the Suite UI and the synthetic installer tests.
+These 1.0.5 sources include the Suite UI and the synthetic installer tests.
 Build into a new directory on Windows with the .NET Framework compiler:
 
 ```powershell

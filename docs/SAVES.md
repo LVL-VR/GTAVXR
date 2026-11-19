@@ -24,6 +24,8 @@ For new sessions, **Fix now** uses the GTA saves folder recorded when the sessio
 
 ## Missing imported saves in v1.0.0
 
+Update with your existing Suite library to use the exact Story save selector. [Update and keep your data](INSTALLATION.md#update-and-keep-your-data)
+
 The Suite may display an imported save even when Story Mode starts the prologue or the save is missing from **Pause Menu → Game → Load Game**. Once you can control your character, check that menu. If your save is listed, select it there. If it is missing, keep your original GTA V Legacy save and report whether it still loads in normal GTA. You can use a separate **New story** profile in the meantime.
 
 ## Where the Suite stores profiles

@@ -94,83 +94,83 @@ const char* GX_CALL error(void*h) noexcept {
     return error_text.c_str();
 }
 }
-extern "C" __declspec(dllexport) int GX_CALL GTAVXR_GetOpenXR(uint32_t version,uint32_t size,GxApi*out) noexcept {
+extern "C" int GX_CALL GTAVXR_GetOpenXR(uint32_t version,uint32_t size,GxApi*out) noexcept {
     if(version!=1||size!=sizeof(GxApi)||!out)return 1;
     *out={sizeof(GxApi),1,create,begin,compose,capture,finish,cancel,destroy,error};return 0;
 }
-extern "C" __declspec(dllexport) int GX_CALL GTAVXR_ReadInput(void*h,GxInput*out) noexcept {
+extern "C" int GX_CALL GTAVXR_ReadInput(void*h,GxInput*out) noexcept {
     return guarded(h,[&](Bridge&b){
         native_xr::demand(out&&out->size==sizeof(*out)&&out->version==1,"INPUT_ABI");
         *out=b.xr.read_input();
     });
 }
 // build165 item 18: the runtime floor (STAGE); valid 0 = no floor (the EXE falls back to the countdown).
-extern "C" __declspec(dllexport) int GX_CALL GtavxrReadFloor1(void*h,GxFloor*out) noexcept {
+extern "C" int GX_CALL GtavxrReadFloor1(void*h,GxFloor*out) noexcept {
     return guarded(h,[&](Bridge&b){
         native_xr::demand(out&&out->size==sizeof(*out)&&out->version==1,"FLOOR_ABI");
         double y=0;const bool ok=b.xr.read_floor(y);out->valid=ok?1u:0u;out->local_above_floor=ok?y:0.0;
     });
 }
-extern "C" __declspec(dllexport) int GX_CALL GTAVXR_SetNativeRumble(void*h,const GxRumble*state) noexcept {
+extern "C" int GX_CALL GTAVXR_SetNativeRumble(void*h,const GxRumble*state) noexcept {
     return guarded(h,[&](Bridge&b){native_xr::demand(state,"RUMBLE_POINTER");b.xr.set_native_rumble(*state);});
 }
-extern "C" __declspec(dllexport) int GX_CALL GTAVXR_SetMenuPanel(void*h) noexcept {
+extern "C" int GX_CALL GTAVXR_SetMenuPanel(void*h) noexcept {
     bool accepted=false;
     const int result=guarded(h,[&](Bridge&b){accepted=b.xr.set_menu_panel();});
     return result?result:(accepted?0:1);
 }
-extern "C" __declspec(dllexport) int GX_CALL GTAVXR_SetMenuAppearance(void*h,const menyoo_vr::Appearance*state) noexcept {
+extern "C" int GX_CALL GTAVXR_SetMenuAppearance(void*h,const menyoo_vr::Appearance*state) noexcept {
     return guarded(h,[&](Bridge&b){native_xr::demand(state,"MENU_APPEARANCE_POINTER");b.xr.set_menu_appearance(*state);});
 }
-extern "C" __declspec(dllexport) int GX_CALL GTAVXR_SetOverlay(void*h,const GxOverlay*state) noexcept {
+extern "C" int GX_CALL GTAVXR_SetOverlay(void*h,const GxOverlay*state) noexcept {
     return guarded(h,[&](Bridge&b){native_xr::demand(state,"OVERLAY_POINTER");b.xr.set_overlay(*state);});
 }
-extern "C" __declspec(dllexport) int GX_CALL GTAVXR_SetWristProfiles(void*h,const GxWristProfiles*state) noexcept {
+extern "C" int GX_CALL GTAVXR_SetWristProfiles(void*h,const GxWristProfiles*state) noexcept {
     return guarded(h,[&](Bridge&b){native_xr::demand(state,"WRIST_PROFILE_POINTER");b.xr.set_wrist_profiles(*state);});
 }
-extern "C" __declspec(dllexport) int GX_CALL GTAVXR_SetUiElementProfiles(void*h,const GxUiElementProfiles*state) noexcept {
+extern "C" int GX_CALL GTAVXR_SetUiElementProfiles(void*h,const GxUiElementProfiles*state) noexcept {
     return guarded(h,[&](Bridge&b){native_xr::demand(state,"UI_ELEMENT_PROFILE_POINTER");b.xr.set_ui_element_profiles(*state);});
 }
 // build167 items 1/2/3: where each HUD panel is drawn (anchor, offset, scale, face the head) + the vehicle anchor pose;
 // ABI 2 (source-v16) adds the wrist buttons card, so the export name changed with the struct
-extern "C" __declspec(dllexport) int GX_CALL GtavxrSetPanelPlacements2(void*h,const GxPanelPlacements2*state) noexcept {
+extern "C" int GX_CALL GtavxrSetPanelPlacements2(void*h,const GxPanelPlacements2*state) noexcept {
     return guarded(h,[&](Bridge&b){
         GxPanelPlacements next;
         native_xr::demand(state&&gx_panel::upgrade(*state,next),"PANEL_PLACEMENT_V2_ABI");
         b.xr.set_panel_placements(next);
     });
 }
-extern "C" __declspec(dllexport) int GX_CALL GtavxrSetPanelPlacements3(void*h,const GxPanelPlacements*state) noexcept {
+extern "C" int GX_CALL GtavxrSetPanelPlacements3(void*h,const GxPanelPlacements*state) noexcept {
     return guarded(h,[&](Bridge&b){native_xr::demand(state,"PANEL_PLACEMENT_POINTER");b.xr.set_panel_placements(*state);});
 }
 // build167 item 4: the head inside a wall, 0 = clear .. 1 = black world (sent every frame while dark)
-extern "C" __declspec(dllexport) int GX_CALL GtavxrSetViewFade1(void*h,float alpha) noexcept {
+extern "C" int GX_CALL GtavxrSetViewFade1(void*h,float alpha) noexcept {
     return guarded(h,[&](Bridge&b){b.xr.set_view_fade(alpha);});
 }
-extern "C" __declspec(dllexport) int GX_CALL GTAVXR_SetUiVisibility(void*h,const GxUiVisibility*state) noexcept {
+extern "C" int GX_CALL GTAVXR_SetUiVisibility(void*h,const GxUiVisibility*state) noexcept {
     return guarded(h,[&](Bridge&b){native_xr::demand(state,"UI_VISIBILITY_POINTER");b.xr.set_ui_visibility(*state);});
 }
-extern "C" __declspec(dllexport) int GX_CALL GTAVXR_CaptureWrist(void*h,const GxWristCapture*state,void*source) noexcept {
+extern "C" int GX_CALL GTAVXR_CaptureWrist(void*h,const GxWristCapture*state,void*source) noexcept {
     return guarded(h,[&](Bridge&b){native_xr::demand(state,"WRIST_POINTER");b.xr.capture_wrist(*state,static_cast<ID3D11Texture2D*>(source));});
 }
-extern "C" __declspec(dllexport) int GX_CALL GTAVXR_CaptureWeaponHud(void*h,const GxWristCapture*state,void*source) noexcept {
+extern "C" int GX_CALL GTAVXR_CaptureWeaponHud(void*h,const GxWristCapture*state,void*source) noexcept {
     return guarded(h,[&](Bridge&b){native_xr::demand(state,"WEAPON_HUD_POINTER");b.xr.capture_weapon_hud(*state,static_cast<ID3D11Texture2D*>(source));});
 }
-extern "C" __declspec(dllexport) int GX_CALL GTAVXR_CaptureNativeUi(void*h,const GxUiCapture*state,void*source) noexcept {
+extern "C" int GX_CALL GTAVXR_CaptureNativeUi(void*h,const GxUiCapture*state,void*source) noexcept {
     int delivery=GX_UI_CAPTURE_REJECTED;
     const int result=guarded(h,[&](Bridge&b){native_xr::demand(state,"UI_POINTER");
         delivery=b.xr.capture_native_ui(*state,static_cast<ID3D11Texture2D*>(source))?GX_UI_CAPTURE_OK:GX_UI_CAPTURE_REJECTED;});
     return result?result:delivery;
 }
-extern "C" __declspec(dllexport) int GX_CALL GTAVXR_LocateHands(void*h,const GxFrame*f,const double*camera,GxHandTargets*out) noexcept {
+extern "C" int GX_CALL GTAVXR_LocateHands(void*h,const GxFrame*f,const double*camera,GxHandTargets*out) noexcept {
     return guarded(h,[&](Bridge&b){native_xr::demand(f&&out,"HANDS_POINTER");b.xr.locate_hands(*f,camera,*out);});
 }
-extern "C" __declspec(dllexport) int GX_CALL GTAVXR_LocateAim(void*h,const GxFrame*f,const double*camera,GxHandTargets*out) noexcept {
+extern "C" int GX_CALL GTAVXR_LocateAim(void*h,const GxFrame*f,const double*camera,GxHandTargets*out) noexcept {
     return guarded(h,[&](Bridge&b){native_xr::demand(f&&out,"AIM_POINTER");b.xr.locate_aim(*f,camera,*out);});
 }
 
 // build133: one-shot runtime per-eye size for the engine's scene size, before any XR session exists.
-extern "C" __declspec(dllexport) int GX_CALL GtavxrQueryEyeSize1(const wchar_t*loader,const GxEyeSizeRequest*r,GxEyeSizeResult*out) noexcept {
+extern "C" int GX_CALL GtavxrQueryEyeSize1(const wchar_t*loader,const GxEyeSizeRequest*r,GxEyeSizeResult*out) noexcept {
     if(!r||!out||r->size!=sizeof(GxEyeSizeRequest)||r->version!=1||out->size!=sizeof(GxEyeSizeResult)||out->version!=1)return GX_EYE_ABI;
     try{
         if(!loader||!*loader){out->status=GX_EYE_LOADER;return GX_EYE_LOADER;}
@@ -189,33 +189,33 @@ extern "C" __declspec(dllexport) int GX_CALL GtavxrQueryEyeSize1(const wchar_t*l
     }catch(...){out->status=GX_EYE_EXCEPTION;return GX_EYE_EXCEPTION;}
 }
 
-extern "C" __declspec(dllexport) int GX_CALL GtavxrEnableScopeSource1(void*h,uint32_t enabled) noexcept {
+extern "C" int GX_CALL GtavxrEnableScopeSource1(void*h,uint32_t enabled) noexcept {
  if(enabled>1)return 1;
  return guarded(h,[&](Bridge&b){b.xr.scopeSourceCaptureEnabled=enabled!=0;b.xr.scopeSources.invalidate();});
 }
-extern "C" __declspec(dllexport) int GX_CALL GtavxrCaptureScopeSource1(void*h,const GxScopeSourceCapture*r,void*source) noexcept {
+extern "C" int GX_CALL GtavxrCaptureScopeSource1(void*h,const GxScopeSourceCapture*r,void*source) noexcept {
  if(!r||!source)return 1;bool accepted=false;
  const int status=guarded(h,[&](Bridge&b){accepted=b.xr.capture_scope_source(*r,static_cast<ID3D11Texture2D*>(source));});
  return status?status:(accepted?0:1);
 }
 
-extern "C" __declspec(dllexport) int GX_CALL GtavxrSetScopeOptic1(void*h,const GxScopeOptic*r) noexcept {
+extern "C" int GX_CALL GtavxrSetScopeOptic1(void*h,const GxScopeOptic*r) noexcept {
  if(!r)return 1;bool accepted=false;
  const int status=guarded(h,[&](Bridge&b){accepted=b.xr.set_scope_optic(*r);});
  return status?status:(accepted?0:1);
 }
 
-extern "C" __declspec(dllexport) int GX_CALL GtavxrReadScopeViewing1(void*h,GxScopeViewing*out) noexcept {
+extern "C" int GX_CALL GtavxrReadScopeViewing1(void*h,GxScopeViewing*out) noexcept {
  if(!out||out->size!=sizeof(*out)||out->version!=1)return 1;
  return guarded(h,[&](Bridge&b){b.xr.read_scope_viewing(*out);});
 }
 
-extern "C" __declspec(dllexport) int GX_CALL GtavxrCaptureScopeReticle1(void*h,const GxScopeReticleCapture*r,void*source) noexcept {
+extern "C" int GX_CALL GtavxrCaptureScopeReticle1(void*h,const GxScopeReticleCapture*r,void*source) noexcept {
  if(!r||!source)return 1;bool accepted=false;
  const int result=guarded(h,[&](Bridge&b){accepted=b.xr.capture_scope_reticle(*r,static_cast<ID3D11Texture2D*>(source));});
  return result?result:(accepted?0:1);
 }
-extern "C" __declspec(dllexport) int GX_CALL GtavxrBindScopeReticle1(void*h,const GxScopeReticleBinding*r) noexcept {
+extern "C" int GX_CALL GtavxrBindScopeReticle1(void*h,const GxScopeReticleBinding*r) noexcept {
  if(!r)return 1;bool accepted=false;
  const int result=guarded(h,[&](Bridge&b){accepted=b.xr.bind_scope_reticle(*r);});
  return result?result:(accepted?0:1);
@@ -223,22 +223,22 @@ extern "C" __declspec(dllexport) int GX_CALL GtavxrBindScopeReticle1(void*h,cons
 
 // 167-neural B2 (eye_chain.h ABI): the per-eye NR/SR chain. Configure: 0 = NR/SR ready, 1 = runs as the bilinear blit
 // (reason in the log and the status), -1 = error (the EXE faults). Guides/params/status: 0 ok, 1 = no chain, -1 = error.
-extern "C" __declspec(dllexport) int GX_CALL GtavxrConfigureEyeChain1(void*h,const GxEyeChainConfig*k) noexcept {
+extern "C" int GX_CALL GtavxrConfigureEyeChain1(void*h,const GxEyeChainConfig*k) noexcept {
     int state=-1;
     const int r=guarded(h,[&](Bridge&b){native_xr::demand(k&&k->size==sizeof(*k)&&k->version==1,"EYE_CHAIN_ABI");state=b.xr.configure_eye_chain(*k);});
     return r?-1:state;
 }
-extern "C" __declspec(dllexport) int GX_CALL GtavxrCaptureEyeGuides1(void*h,const GxEyeGuides*g,void*depth) noexcept {
+extern "C" int GX_CALL GtavxrCaptureEyeGuides1(void*h,const GxEyeGuides*g,void*depth) noexcept {
     bool active=false;
     const int r=guarded(h,[&](Bridge&b){active=b.xr.eye_chain_guides(g,static_cast<ID3D11Resource*>(depth));});
     return r?-1:(active?0:1);
 }
-extern "C" __declspec(dllexport) int GX_CALL GtavxrSetNeuralParams1(void*h,uint32_t enabled,uint32_t intensity,uint32_t compare) noexcept {
+extern "C" int GX_CALL GtavxrSetNeuralParams1(void*h,uint32_t enabled,uint32_t intensity,uint32_t compare) noexcept {
     bool active=false;
     const int r=guarded(h,[&](Bridge&b){active=b.xr.set_neural_params(enabled,intensity,compare);});
     return r?-1:(active?0:1);
 }
-extern "C" __declspec(dllexport) int GX_CALL GtavxrReadEyeChainStatus1(void*h,GxEyeChainStatus*out) noexcept {
+extern "C" int GX_CALL GtavxrReadEyeChainStatus1(void*h,GxEyeChainStatus*out) noexcept {
     if(!out)return -1;
     const int r=guarded(h,[&](Bridge&b){b.xr.eyeChain.status(*out);},true);
     return r?-1:0;
@@ -248,8 +248,17 @@ extern "C" __declspec(dllexport) int GX_CALL GtavxrReadEyeChainStatus1(void*h,Gx
 // returns a refusal without throwing through guarded() and faulting the session.
 // build143 P2: engine feature probe. bit0 = cross-thread calls serialize (guarded) instead of being refused, so the
 // update thread may read input/rumble/scope viewing without the engine D3D context while the render thread captures.
-extern "C" __declspec(dllexport) int GX_CALL GtavxrBridgeFeatures1(uint32_t*mask) noexcept {if(!mask)return 1;*mask=1u;return 0;}
-extern "C" __declspec(dllexport) int GX_CALL GtavxrSetScopePanel1(void*h,const GxScopePanel*p) noexcept {
+extern "C" int GX_CALL GtavxrBridgeFeatures1(uint32_t*mask) noexcept {if(!mask)return 1;*mask=1u;return 0;}
+// Optional stereo theatre for cutscenes (theatre_api.h). GX_THEATRE_ARMED: the views are the filming pair and
+// this frame presents them on the room-fixed screen. GX_THEATRE_REFUSED: nothing changed, the caller composes
+// this frame with its ordinary camera. A refusal or a presentation failure never faults the session.
+extern "C" int GX_CALL GtavxrComposeTheatre1(void*h,const GxFrame*f,const double*camera,const GxTheatre*r,GxViews*out) noexcept {
+    if(!f||!camera||!r||!out)return 1;
+    int state=GX_THEATRE_REFUSED;
+    const int result=guarded(h,[&](Bridge&b){state=b.xr.compose_theatre(*f,camera,*r,*out);});
+    return result?result:state;
+}
+extern "C" int GX_CALL GtavxrSetScopePanel1(void*h,const GxScopePanel*p) noexcept {
     bool accepted=false;
     const int result=guarded(h,[&](Bridge&b){accepted=b.xr.set_scope_panel(p);});
     return result?result:(accepted?0:1);

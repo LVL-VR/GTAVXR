@@ -4,8 +4,8 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
 
-[assembly: AssemblyVersion("1.0.2.0")]
-[assembly: AssemblyFileVersion("1.0.2.0")]
+[assembly: AssemblyVersion("1.0.5.0")]
+[assembly: AssemblyFileVersion("1.0.5.0")]
 [assembly: AssemblyProduct("GTAVXR by LVL")]
 [assembly: TargetFramework(".NETFramework,Version=v4.6.2")]
 
@@ -31,7 +31,7 @@ namespace GtavxrSuite {
             if(a[0]=="--imported-save-control"&&a.Length==3){Json.New(a[2],EmbeddedInstallTests.CheckImportedSave(a[1]));return 0;}
             if(a[0]=="--story-incident-control"&&a.Length==6){Json.New(a[5],EmbeddedInstallTests.CheckSaveIncident(a[1],a[2],a[3],a[4]));return 0;}
             if(a[0]=="--self-test"&&a.Length==3){var r=EngineTests.Run(a[1]);Json.New(a[2],r);return r.failed==0?0:1;}
-            if(a[0]=="--release-migration-fixture"&&a.Length==3){Json.New(a[2],ReleaseLifecycleTests.FromPublic100(a[1]));return 0;}
+            if(a[0]=="--release-migration-fixture"&&a.Length==3){Json.New(a[2],ReleaseLifecycleTests.FromPreviousPublicRelease(a[1]));return 0;}
             if(a[0]=="--verify-embedded-release"&&a.Length==4){Json.New(a[3],EmbeddedRelease.Reconstruct(a[1],a[2],System.Threading.CancellationToken.None));return 0;}
             if(a[0]=="--embedded-install-fixture"&&a.Length==4){Json.New(a[3],EmbeddedInstallTests.Run(a[1],a[2]));return 0;}
             if(a[0]=="--shader-delta-install-fixture"&&a.Length==4){Json.New(a[3],EmbeddedInstallTests.Run(a[1],a[2],true));return 0;}

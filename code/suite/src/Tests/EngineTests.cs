@@ -6,8 +6,11 @@ using System.Diagnostics;
 using System.Collections.Generic;
 
 namespace GtavxrSuite {
-    public class TestRow { public string name {get;set;} public bool pass {get;set;} public string detail {get;set;} public double seconds {get;set;} }
-    public class TestReport { public string schema {get;set;} public int passed {get;set;} public int failed {get;set;} public List<TestRow> rows {get;set;} public bool gta_launched {get;set;} public bool real_game_touched {get;set;} }
+    public class TestRow { public string name {get;set;} public bool pass {get;set;} public bool not_exercised {get;set;} public string detail {get;set;} public double seconds {get;set;} }
+    public class TestReport { public string schema {get;set;} public int passed {get;set;} public int failed {get;set;} public int not_exercised {get;set;} public List<TestRow> rows {get;set;} public bool gta_launched {get;set;} public bool real_game_touched {get;set;} }
+    // A case whose fixture this machine refuses to prepare (for example a junction Windows denies): neither a pass nor a
+    // failure of the behaviour under test. The report counts and names it with the exact reason.
+    public sealed class NotExercisedException : Exception { public NotExercisedException(string reason):base(reason){} }
 
     // Headless engine tests over an owned fixture world. The "game" is this same EXE in --fixture-game mode.
     public static class EngineTests {
@@ -61,11 +64,18 @@ namespace GtavxrSuite {
             Action<string,Action> t=(name,body)=>{
                 var sw=Stopwatch.StartNew();
                 try{body();rows.Add(new TestRow{name=name,pass=true,seconds=sw.Elapsed.TotalSeconds});}
+                catch(NotExercisedException e){rows.Add(new TestRow{name=name,pass=false,not_exercised=true,detail="NOT_EXERCISED: "+e.Message,seconds=sw.Elapsed.TotalSeconds});}
                 catch(Exception e){rows.Add(new TestRow{name=name,pass=false,detail=e.ToString(),seconds=sw.Elapsed.TotalSeconds});}
             };
             t("save title parse",SaveTitle);
             t("exact Story save selection, new story, imports and retryable capture",()=>StoryStartTests.Run(Path.Combine(fresh,"story-start")));
             t("migrate public profiles in place and retire exclusive release files",()=>ReleaseLifecycleTests.Migration(Path.Combine(fresh,"release-migration")));
+            t("an update to another release stopped at any phase: its verified journal is kept aside and this installer migrates everything; newer, foreign, corrupt or changed journals stop intact",()=>ReleaseLifecycleTests.InterruptedOtherRelease(Path.Combine(fresh,"interrupted-other")));
+            t("check files covers the game folder and runtime: restores and verifies, names a damaged stored copy, reports held files and no space, never a partial OK; retry finishes",()=>ReleaseLifecycleTests.RepairBoth(Path.Combine(fresh,"repair-both")));
+            t("an update that stopped after deleting a retired record hands its work over durably: valid exclusive blob retired, altered one kept and reported, shared ones kept, through every interruption",()=>ReleaseLifecycleTests.MigrationHandover(Path.Combine(fresh,"migration-handover")));
+            t("a foreign or invalid update handover stops the update and stays intact",()=>ReleaseLifecycleTests.ForeignHandover(Path.Combine(fresh,"foreign-handover")));
+            t("check files refuses a runtime folder linked outside the library and writes nothing through it",()=>ReleaseLifecycleTests.RepairJunction(Path.Combine(fresh,"repair-junction")));
+            t("check files with a correct EXE and a null, empty, partial or repeated runtime record is incomplete and names every missing file",()=>ReleaseLifecycleTests.RepairInventory(Path.Combine(fresh,"repair-inventory")));
             t("complete data removal preserves GTA and regular saves",()=>ReleaseLifecycleTests.Removal(Path.Combine(fresh,"release-removal")));
             t("verified moved game can be removed without touching foreign files",()=>ReleaseLifecycleTests.MovedGame(Path.Combine(fresh,"moved-game")));
             t("divergent libraries preserve both saves and allow migration after verified import",()=>ReleaseLifecycleTests.DivergentLibraries(Path.Combine(fresh,"divergent")));
@@ -160,7 +170,8 @@ namespace GtavxrSuite {
             t("gameconfig pools above the EXE's 16-bit limit are lowered and reported",PoolClamp);
             t("Legacy 3889 check: plugins accepted, archive rewritten by a mod tool accepted and noted, non-archive and other executable refused",()=>LegacyGamePolicy.Fixture(Path.Combine(fresh,"policy")));
             NeuralSuiteTests.Add(t,Path.Combine(fresh,"neural"));
-            return new TestReport{schema="gtavxr-suite2-tests-v1",rows=rows,passed=rows.Count(r=>r.pass),failed=rows.Count(r=>!r.pass),gta_launched=false,real_game_touched=false};
+            return new TestReport{schema="gtavxr-suite2-tests-v1",rows=rows,passed=rows.Count(r=>r.pass),failed=rows.Count(r=>!r.pass&&!r.not_exercised),
+                not_exercised=rows.Count(r=>r.not_exercised),gta_launched=false,real_game_touched=false};
         }
 
         static void RuntimeCapabilities(string root){
