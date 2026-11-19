@@ -3,19 +3,22 @@
 // No session, swapchain or device. SteamVR may reuse the qualified instance.
 #include "eye_size_policy.h"
 #include "xr_preopened.h"
+#include "cheeky_host.h"
 #include <algorithm>
 #include <string.h>
 namespace native_xr {
 inline uint32_t query_eye_size(OpenXrApi&api,const GxEyeSizeRequest&request,GxEyeSizeResult&out,
                                XrInstance* keep=nullptr,XrSystemId* keepSystem=nullptr){
     out.mode=request.mode;out.scale_percent=gx_eye_size::clampScale(request.scale_percent);
-    XrInstance instance=XR_NULL_HANDLE;const char*extension=XR_KHR_D3D11_ENABLE_EXTENSION_NAME;
+    XrInstance instance=XR_NULL_HANDLE;
     XrInstanceCreateInfo ci{XR_TYPE_INSTANCE_CREATE_INFO};
     const bool steam=keep&&keepSystem;
     strcpy_s(ci.applicationInfo.applicationName,steam?"GTAVXR Native":"GTAVXR Native Size Query");
     strcpy_s(ci.applicationInfo.engineName,"GTAVXR");
     ci.applicationInfo.apiVersion=steam?XR_API_VERSION_1_0:XR_CURRENT_API_VERSION;
-    ci.enabledExtensionCount=1;ci.enabledExtensionNames=&extension;
+    // Only the instance SteamVR keeps for the session asks for eye gaze (Cheeky installed and advertised).
+    std::vector<const char*> extensions=steam?gx_cheeky::instance_extensions(api):std::vector<const char*>{XR_KHR_D3D11_ENABLE_EXTENSION_NAME};
+    ci.enabledExtensionCount=uint32_t(extensions.size());ci.enabledExtensionNames=extensions.data();
     if(!api.CreateInstance||XR_FAILED(api.CreateCompatibleInstance(ci,instance))||instance==XR_NULL_HANDLE)return out.status=GX_EYE_RUNTIME;
     uint32_t status=GX_EYE_RUNTIME;
     if(api.LoadForInstance(instance)){

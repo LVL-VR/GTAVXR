@@ -210,6 +210,13 @@ public:
     bool timing = false;           // developer mode readings (GPU ms per stage)
 
     bool active() const { return configured_; }
+    // COM identity of the D3D12 resource DLSS SR writes for this eye (as Cheeky's canonical_identity) and its size.
+    bool output_identity(unsigned e, uint64_t& id, uint32_t& w, uint32_t& h) const {
+        if (!configured_ || e > 1 || !eyes_[e].out12) return false;
+        IUnknown* u = nullptr;
+        if (FAILED(eyes_[e].out12->QueryInterface(IID_PPV_ARGS(&u))) || !u) return false;
+        id = uint64_t(reinterpret_cast<uintptr_t>(u)); u->Release(); w = ow_; h = oh_; return true;
+    }
     uint32_t render_width() const { return rw_; }
     uint32_t render_height() const { return rh_; }
 
@@ -370,8 +377,12 @@ private:
         D3D11_BUFFER_DESC b{}; b.ByteWidth = sizeof(CaptureConstants); b.Usage = D3D11_USAGE_DEFAULT; b.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
         Hr(device_->CreateBuffer(&b, NULL, &captureCb_), "capture_constants");
         // D3D12 on the game's adapter, loaded only here (the native path never touches d3d12.dll)
-        HMODULE d3d12 = LoadLibraryW(L"d3d12.dll");
-        if(!d3d12) throw Error{"d3d12_dll", static_cast<long>(HRESULT_FROM_WIN32(GetLastError()))};
+        // A host that restricted its DLL search path (SetDefaultDllDirectories) cannot find d3d12.dll by name;
+        // retry from System32 and keep the first Win32 error for the fallback log line.
+        HMODULE d3d12 = LoadLibraryW(L"d3d12.dll"); const DWORD loadError = d3d12 ? 0 : GetLastError();
+        if(!d3d12) d3d12 = LoadLibraryExW(L"d3d12.dll", NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
+        if(!d3d12) throw Error{"d3d12_dll", (long)(loadError ? loadError : GetLastError())};
+        if(loadError) say("EYE_CHAIN d3d12_dll system32_retry win32=" + std::to_string(loadError));
         auto create12 = reinterpret_cast<PFN_D3D12_CREATE_DEVICE>(GetProcAddress(d3d12, "D3D12CreateDevice")); Need(create12 != nullptr, "d3d12_entry");
         ComPtr<IDXGIDevice> dx; ComPtr<IDXGIAdapter> adapter; Hr(device_.As(&dx), "dxgi_device"); Hr(dx->GetAdapter(&adapter), "dxgi_adapter");
         Hr(create12(adapter.Get(), D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&dev12_)), "d3d12_device");
