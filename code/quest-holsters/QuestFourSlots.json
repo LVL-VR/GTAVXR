@@ -1,0 +1,10 @@
+{
+  "file_format_version": "1.0.0",
+  "api_layer": {
+    "implementation_version": "1",
+    "name": "XR_APILAYER_GTAVXR_quest_holsters",
+    "library_path": "./QuestFourSlotsXR.dll",
+    "description": "Four native VR holsters",
+    "api_version": "1.0"
+  }
+}
